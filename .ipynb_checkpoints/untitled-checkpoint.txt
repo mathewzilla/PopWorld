@@ -1,0 +1,11 @@
+% Matlab script to load Peron et al 2015 crcns data and run noise rejection, saving the outputs
+
+clear all; close all
+
+% analysis parameters from example
+pars.N = 100;           % repeats of permutation
+% pars.alpha = 0; %0.95; % 0.95; % 0;         % confidence interval on estimate of maxiumum eigenvalue for null model; set to 0 for mean
+pars.I = 0;      % interval 
+pars.Model = 'Poiss';   % or 'WCM' . % which null model
+pars.C = 1;             % conversion factor for real-valued weights (set=1 for integers)
+pars.eg_min = 1e-2;      % given machine error, what is acceptable as "zero" eigenvalue
