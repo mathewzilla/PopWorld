@@ -5,7 +5,7 @@ if ~exist('NetworkNoiseRejection')
     addpath(genpath('~/work/NetworkNoiseRejection'))
 end
 
-fnames = {'Peron_example';'Peron_example_events';'Peron_example_events_WCM';'Peron_example_WCM'};
+fnames = {'Peron_example';'Peron_example_events';'Peron_example_WCM';'Peron_example_events_WCM'};
 models = {'Poiss';'Poiss';'WCM';'WCM'};
 datasets = [2,3,2,3];
 
