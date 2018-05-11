@@ -69,7 +69,7 @@ end
 B = Data.A - Data.ExpA;  % modularity matrix using chosen null model
 
 % find low-dimensional projection
-[Data.Dspace,~,Data.Dn,Data.EigEst,Data.Nspace,~,Data.Dneg,Data.NEigEst] = LowDSpace(B,Data.Emodel,pars.I); % to just obtain low-dimensional projection; Data.Dn = number of retained eigenvectors
+[Data.Dspace,Data.ixpos,Data.Dn,Data.EigEst,Data.Nspace,Data.ixneg,Data.Dneg,Data.NEigEst] = LowDSpace(B,Data.Emodel,pars.I); % to just obtain low-dimensional projection; Data.Dn = number of retained eigenvectors
 
 % compute dimensions based on just positive eigenvalues
 egs = eig(B);  % eigenspectra of data modularity matrix
@@ -117,7 +117,46 @@ save(['Results/Rejected_' fname],'Rejection','Data','Control','pars','optionsMod
 
 end
 
+%% Simple visualizations of Matrix, expected matrix, retained neurons etc
 
+B = Data.A - Data.ExpA;
+
+figure
+ax(1) = subplot(1,3,1); imagesc(Data.A); axis square; title('A')
+ax(2) = subplot(1,3,2); imagesc(Data.ExpA); axis square; title('ExpA')
+ax(3) = subplot(1,3,3); imagesc(B); axis square; title('B (A - ExpA)')
+linkaxes(ax)
+
+%% Eigenvectors
+[V,egs] = eig(B);  % eigenspectra of data modularity matrix
+egs = diag(egs); % extract vector from diagonal
+[egs,ix] = sort(egs,'descend'); % sort eigenvalues into descending order 
+V = V(:,ix);  % sort eigenvectors accordingly
+
+%% Plot matrices again, but ordered by projection on to 3 largest eigenvectors
+figure
+for i = 1:3
+[eig_sort,eig_order] = sort(V(:,i),'descend');
+ax((i*3)-3+1) = subplot(3,3,(i*3)-3+1); imagesc(Data.A(eig_order,eig_order)); axis square; 
+ax((i*3)-3+2) = subplot(3,3,(i*3)-3+2); imagesc(Data.ExpA(eig_order,eig_order)); axis square;
+ax((i*3)-3+3) = subplot(3,3,(i*3)-3+3); imagesc(B(eig_order,eig_order)); axis square; 
+end
+
+%% B ordered by tsne
+tsne_B = tsne(B,'NumDimensions',1);
+[tsne_sort,tsne_order] = sort(tsne_B,'descend');
+clf
+imagesc(B(tsne_order,tsne_order))
+
+%% Image raw data but in tsne order
+load '/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_03_07.mat'
+% get relevant data matrix
+data = dat.timeSeriesArrayHash.value{1,datasets(i)}.valueMatrix;
+% clean up
+data(find(isnan(data))) = 0;
+% only retained cells
+data = data(Data.ixRetain,:);
+imagesc(data(tsne_order,:))
 %% Cluster with consensus and Louvain
 
 %% script to cluster Full and Signal networks, and compare them
