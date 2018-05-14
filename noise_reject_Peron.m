@@ -157,20 +157,74 @@ data(find(isnan(data))) = 0;
 % only retained cells
 data = data(Data.ixRetain,:);
 imagesc(data(tsne_order,:))
-%% Cluster with consensus and Louvain
+%% Cluster with Louvain (for speed)
+fnames = {'Peron_example';'Peron_example_events';'Peron_example_WCM';'Peron_example_events_WCM'};
 
-%% script to cluster Full and Signal networks, and compare them
+for k = 2
+    fname = fnames{k}
+    blnLabels = 0;      % write node labels? Omit for large networks
+    fontsize = 6;
+    
+    clusterpars.nreps = 100;
+    clusterpars.nLouvain = 5;
+    
+    % load data
+    load(['Results/Rejected_' fname])
+    
+    %% Cluster with louvain method (for speed)
+    numConnected = length(Data.ixSignal_Final);
+    % With noise rejection
+    [Connected.LouvCluster,Connected.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.Asignal_final,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    
+    % Full dataset
+    [Full.LouvCluster,Full.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    
+    % Save results
+    
+    %% Plot
+    
+    % Signal subset
+    for i=1:numel(Connected.LouvCluster)
+        CLou = Connected.LouvCluster{i}{1};  % Repeat#, Level of Hierarchy
+        [H,h,Ix] = plotClusterMap(Data.Asignal_final,CLou,[],[],'S');
+        plotorder = Data.ixSignal_Final(Ix);
+        title(['Louvain ' num2str(i)]);
+        if blnLabels
+            % Add node labels
+            set(gca,'Ytick',1:numConnected);
+            set(gca,'Yticklabel',Data.nodelabels(plotorder,:),'Fontsize',fontsize);
+        end
+        % set(gca,'XTickLabelRotation',90);
+        for j = i+1:numel(Connected.LouvCluster)
+            CLou2 = Connected.LouvCluster{j}{1};  % Repeat#, Level of Hierarchy
+            Connected.VI_Louvain(i,j) = VIpartitions(CLou,CLou2) ./ log(numConnected);
+        end
+    end
+    
+    % Full dataset
+    for i=1:numel(Full.LouvCluster)
+        CLou = Full.LouvCluster{i}{1};  % Repeat#, Level of Hierarchy
+        [HL,h,Ix] = plotClusterMap(Data.A,CLou,[],[],'S');
+        title(['Full Louvain ' num2str(i)]);
+        plotorder = Ix;
+        if blnLabels
+            % Add node labels
+            set(gca,'Ytick',1:numel(Data.ixRetain));
+            set(gca,'Yticklabel',Data.nodelabels(plotorder,:),'Fontsize',fontsize);
+        end
+        for j = i+1:numel(Full.LouvCluster)
+            CLou2 = Full.LouvCluster{j}{1};  % Repeat#, Level of Hierarchy
+            Full.VI_Louvain(i,j) = VIpartitions(CLou,CLou2) ./ log(numel(Data.ixRetain));
+        end
+    end
+    
+    save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
+    
+    
+% end
 
-for k = 1:4;
-fname = fnames{k}
-blnLabels = 0;      % write node labels? Omit for large networks
-fontsize = 6;
 
-clusterpars.nreps = 100;
-clusterpars.nLouvain = 5;
 
-% load data
-load(['Results/Rejected_' fname])
 
 %% cluster - with noise rejection
 % consensus modularity
@@ -209,7 +263,7 @@ end
 numConnected = length(Data.ixSignal_Final);
 
 if Data.Dn > 0
-    [H,Ix] = plotClusterMap(Data.Asignal_final,Connected.ConsCluster,[],'S');
+    [H,h,Ix] = plotClusterMap(Data.Asignal_final,Connected.ConsCluster,[],[],'S');
     title('Consensus clustering')
     plotorder = Data.ixSignal_Final(Ix);
     
@@ -220,7 +274,7 @@ if Data.Dn > 0
         % set(gca,'XTickLabelRotation',90);
     end
     % compare to the Qmax solution at the requested number of groups
-    [H,Ix] = plotClusterMap(Data.Asignal_final,Connected.QmaxCluster,[],'S');
+    [H,h,Ix] = plotClusterMap(Data.Asignal_final,Connected.QmaxCluster,[],[],'S');
     title('Qmax clustering')
     if blnLabels
         % Add node labelss
@@ -233,7 +287,7 @@ end
 
 for i=1:numel(Connected.LouvCluster)
     CLou = Connected.LouvCluster{i}{1};  % Repeat#, Level of Hierarchy
-    [H,Ix] = plotClusterMap(Data.Asignal_final,CLou,[],'S');
+    [H,h,Ix] = plotClusterMap(Data.Asignal_final,CLou,[],[],'S');
     plotorder = Data.ixSignal_Final(Ix);
     title(['Louvain ' num2str(i)]);
     if blnLabels
