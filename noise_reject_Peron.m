@@ -304,7 +304,7 @@ end
 
 %% without noise rejection
 if Data.Dn > 0
-    [H,Ix] = plotClusterMap(Data.A,Full.ConsCluster,[],'S');
+    [H,h,Ix] = plotClusterMap(Data.A,Full.ConsCluster,[],[],'S');
     title('Consensus clustering of all')
     plotorder = Ix;
     
@@ -319,7 +319,7 @@ end
 % Louvain algorithm
 for i=1:numel(Full.LouvCluster)
     CLou = Full.LouvCluster{i}{1};  % Repeat#, Level of Hierarchy
-    [HL,Ix] = plotClusterMap(Data.A,CLou,[],'S');
+    [HL,h,Ix] = plotClusterMap(Data.A,CLou,[],[],'S');
     title(['Full Louvain ' num2str(i)]);
     plotorder = Ix;
     if blnLabels

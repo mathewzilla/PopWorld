@@ -112,7 +112,7 @@ for i = 1:numel(animals)
     end
 end
 
-% Summarise into a table
+%% Summarise into a table
 fnames = dir('Results_batch1/');
 
 nF = numel(fnames);
@@ -123,7 +123,7 @@ for iF = 1:nF
     if any(strfind(fnames(iF).name,'Rejected'))
         netCtr = netCtr + 1;
         result(netCtr).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
-        load(['Results/' fnames(iF).name]);
+        load(['Results_batch1/' fnames(iF).name]);
         result(netCtr).Network_Size = numel(Data.ixRetain);
         result(netCtr).Signal_Size_WCM = numel(Data.ixSignal_Final);
         result(netCtr).WCM_Dn = Data.PosDn;
