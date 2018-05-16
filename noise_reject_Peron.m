@@ -218,7 +218,7 @@ for k = 2
         end
     end
     
-    save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
+%     save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
     
     
 % end
@@ -333,6 +333,6 @@ for i=1:numel(Full.LouvCluster)
     end
 end
 
-save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
+% save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
 
 end
