@@ -239,6 +239,9 @@ P = Data.ExpA(Data.ixSignal_Final,Data.ixSignal_Final); % extract relevant part 
 % % find low-dimensional projection
 % [~,~,Signal.Dn,~] = LowDSpace(P,Signal.Emodel,pars.alpha); % to just obtain low-dimensional projection
 
+% For debugging:
+% W = Data.Asignal_final; P = P; L = 1+Data.Dn; M = 1+Data.Dn; varargin = clusterpars.nreps;
+
 % then cluster
 if Data.Dn > 0
     [Connected.QmaxCluster,Connected.Qmax,Connected.ConsCluster,Connected.ConsQ,ctr] = ...
@@ -262,6 +265,7 @@ end
 %% plot sorted into group order
 numConnected = length(Data.ixSignal_Final);
 
+% Consensus
 if Data.Dn > 0
     [H,h,Ix] = plotClusterMap(Data.Asignal_final,Connected.ConsCluster,[],[],'S');
     title('Consensus clustering')
@@ -285,6 +289,7 @@ if Data.Dn > 0
    
 end
 
+% Louvain
 for i=1:numel(Connected.LouvCluster)
     CLou = Connected.LouvCluster{i}{1};  % Repeat#, Level of Hierarchy
     [H,h,Ix] = plotClusterMap(Data.Asignal_final,CLou,[],[],'S');
@@ -301,6 +306,15 @@ for i=1:numel(Connected.LouvCluster)
         Connected.VI_Louvain(i,j) = VIpartitions(CLou,CLou2) ./ log(numConnected);
     end
 end
+
+%% Qmax plotting
+plotClusterMap(Data.Asignal_final,Connected.QmaxCluster,[],[],'S')
+title(['Qmax. K = ',num2str(Data.Dn)])
+% Also plot historgram of group size
+edges = linspace(0.5,0.5+max(Connected.QmaxCluster),max(Connected.QmaxCluster)+1);
+b = histc(Connected.QmaxCluster,edges);
+bar(edges,b,'histc')
+
 
 %% without noise rejection
 if Data.Dn > 0

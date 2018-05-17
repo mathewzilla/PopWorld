@@ -218,7 +218,7 @@ for k = 2
         end
     end
     
-    save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
+%     save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
     
     
 % end
@@ -238,6 +238,10 @@ P = Data.ExpA(Data.ixSignal_Final,Data.ixSignal_Final); % extract relevant part 
 % P = Data.Aconnected - Signal.ExpA;  % modularity matrix using chosen null model
 % % find low-dimensional projection
 % [~,~,Signal.Dn,~] = LowDSpace(P,Signal.Emodel,pars.alpha); % to just obtain low-dimensional projection
+
+% For debugging:
+% W = Data.Asignal_final,P = P,L = 1+Data.Dn,M = 1+Data.Dn; varargin =
+% clusterpars.nreps;
 
 % then cluster
 if Data.Dn > 0
