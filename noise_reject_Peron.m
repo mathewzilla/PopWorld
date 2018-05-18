@@ -350,3 +350,60 @@ end
 % save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
 
 end
+
+%% Debugging CCons
+% load Results/CCons_all
+
+for i = 1:10;
+    C = CCons_all{i};
+% get upper-triangular entries of consensus matrix
+idx = find(triu(ones(size(C)),1)); % upper triangular above diagonal;
+allCs = C(idx);
+
+% convergence of weights?
+if all(allCs == 1)
+    theta = -inf;   % converged to all 1s, so no need to check for bimodality
+else
+    try
+        % initialised centroids dynamically according to spread of data
+        s =  prctile(allCs,[0.1,99.9]);
+        idx = kmeans(allCs,2,'Start',s'); % use k-means to separate into mode groups
+    catch
+        keyboard
+    end
+    
+    % work out which is lower and which is higher distribution, and set
+    % dividing line of modes (theta)
+    m1 = mean(allCs(idx==1));  mn1 =  min(allCs(idx==1));
+    m2 = mean(allCs(idx==2));  mn2 =  min(allCs(idx==2));        
+    if m1 > m2  
+        theta = mn1;
+    elseif m2 > m1 
+        theta = mn2;
+    end
+end
+
+A_upper = C;
+A_upper(C < theta) = 0;  % remove all of lower mode links from matrix
+
+% Debug plotting
+figure(102);
+clf
+subplot(1,2,1);
+bins = linspace(0,1,101);
+h1 = histc(allCs(find(allCs<theta)),bins);
+bar(bins,h1,'b','edgecolor','b')
+hold all
+h2 = histc(allCs(find(allCs>=theta)),bins);
+bar(bins,h2,'r','edgecolor','r');
+plot(s,[10e4,10e4],'v','color',[0,0,0])
+plot(m1,10e4,'bo')
+plot(m2,10e4,'ro')
+legend('Grp1','Grp2','s','m1','m2')
+
+subplot(1,2,2);
+imagesc(A_upper);
+suptitle(['Run ',num2str(i)])
+drawnow
+pause
+end
