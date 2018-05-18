@@ -354,11 +354,14 @@ end
 %% Debugging CCons
 % load Results/CCons_all
 
-for i = 1:10;
+for i = 6%1:10;
     C = CCons_all{i};
 % get upper-triangular entries of consensus matrix
 idx = find(triu(ones(size(C)),1)); % upper triangular above diagonal;
 allCs = C(idx);
+
+[blnConverged,grpscon] = CheckConvergenceConsensus(C); blnConverged
+
 
 % convergence of weights?
 if all(allCs == 1)
