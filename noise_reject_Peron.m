@@ -352,10 +352,10 @@ end
 end
 
 %% Debugging CCons
-% load Results/CCons_all
+% load Results/CCons_all % CCons_10
 
-for i = 6%1:10;
-    C = CCons_all{i};
+for i = 1:10
+    C = CCons_10{i};
 % get upper-triangular entries of consensus matrix
 idx = find(triu(ones(size(C)),1)); % upper triangular above diagonal;
 allCs = C(idx);
