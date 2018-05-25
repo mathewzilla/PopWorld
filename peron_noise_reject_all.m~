@@ -2,7 +2,7 @@
 %
 % Script to apply null model based Noise Rejection to data from Peron et al 2015
 
-%% Big loop to perform Data_Noise_Rejection on all subvolumes in Peron 2015 (Calcium only for now)
+%% Big loop to perform Data_Noise_Rejection on all subvolumes in Peron 2015 (Calcium to start. Events now too)
 
 
 clear all;
@@ -11,7 +11,7 @@ clear all;
 pars.N = 100;           % repeats of permutation
 % pars.alpha = 0; %0.95; % 0.95; % 0;         % confidence interval on estimate of maxiumum eigenvalue for null model; set to 0 for mean
 pars.I = 0;      % interval
-pars.Model = Poiss;   % Poiss or 'WCM' . % which null model
+pars.Model = 'Poiss';   % Poiss or 'WCM' . % which null model
 pars.C = 100;             % conversion factor for real-valued weights (set=1 for integers, 'all' to use full data range)
 pars.eg_min = 1e-2;      % given machine error, what is acceptable as "zero" eigenvalue
 
@@ -25,7 +25,8 @@ optionsReject.Norm = 'L2';       % L2 is default
 optionsReject.Interval = 'CI';
 
 % topdir = ['/Volumes/05/Peron_2015/Peron_ssc-2/ssc-2'];
-topdir = ['/media/mathew/Data_1/Peron_ssc-2/ssc-2'];
+% topdir = ['/media/mathew/Data_1/Peron_ssc-2/ssc-2'];
+topdir = ['/media/mathew/Data_1/Peron_ssc-2/with_events'];
 % topdir = ['/mnt/isilon/Hlab/Mat_Evans/Peron_ssc_events'];
 animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
 Rejection_Results = {};
@@ -33,13 +34,20 @@ for i = 1:numel(animals)
     %     cd([topdir,'/',animals{i}]);
     files = dir([topdir,'/',animals{i}]);
     for j = 3:numel(files)
+        
+        % Event traces are always the last (N-1)/2 entries
+        N = numel(s.timeSeriesArrayHash.value);
+        ev_files = ((N-1)/2)+2 : N;
+        
         load([topdir,'/',animals{i},'/',files(j).name]);
-        parfor k = 2:numel(s.timeSeriesArrayHash.value)
+%         for k = 2:numel(s.timeSeriesArrayHash.value)
+        for k = 1:numel(ev_files)
             
-            fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
+%             fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
+            fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
             
-            data = s.timeSeriesArrayHash.value{k}.valueMatrix;
-            
+%             data = s.timeSeriesArrayHash.value{k}.valueMatrix;
+            data = s.timeSeriesArrayHash.value{ev_files(k)}.valueMatrix;
             % clean up
             data(find(isnan(data))) = 0;
             
@@ -112,7 +120,7 @@ for i = 1:numel(animals)
     end
 end
 
-% Summarise into a table
+%% Summarise into a table
 fnames = dir('Results_batch1/');
 
 nF = numel(fnames);
@@ -123,7 +131,7 @@ for iF = 1:nF
     if any(strfind(fnames(iF).name,'Rejected'))
         netCtr = netCtr + 1;
         result(netCtr).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
-        load(['Results/' fnames(iF).name]);
+        load(['Results_batch1/' fnames(iF).name]);
         result(netCtr).Network_Size = numel(Data.ixRetain);
         result(netCtr).Signal_Size_WCM = numel(Data.ixSignal_Final);
         result(netCtr).WCM_Dn = Data.PosDn;
@@ -136,6 +144,20 @@ end
 
 Network_Rejection_Table = struct2table(result);
 save('Results_batch1/Network_Rejection_Table','Network_Rejection_Table');
+
+%% Cluster noise rejection results
+blnLabels = 1;      % write node labels? Omit for large networks
+fontsize = 6;
+
+clusterpars.nreps = 100;
+clusterpars.nLouvain = 5;
+
+files = dir('Results_batch1/Rejected_*')
+% load data
+load(['../Results/Rejected_' fname])
+
+
+
 
 %% ksdensity and scatter of various variables
 % TO Do plot median with label

@@ -2,7 +2,7 @@
 %
 % Script to apply null model based Noise Rejection to data from Peron et al 2015
 
-%% Big loop to perform Data_Noise_Rejection on all subvolumes in Peron 2015 (Calcium only for now)
+%% Big loop to perform Data_Noise_Rejection on all subvolumes in Peron 2015 (Calcium to start. Events now too)
 
 
 clear all;
@@ -25,7 +25,8 @@ optionsReject.Norm = 'L2';       % L2 is default
 optionsReject.Interval = 'CI';
 
 % topdir = ['/Volumes/05/Peron_2015/Peron_ssc-2/ssc-2'];
-topdir = ['/media/mathew/Data_1/Peron_ssc-2/ssc-2'];
+% topdir = ['/media/mathew/Data_1/Peron_ssc-2/ssc-2'];
+topdir = ['/media/mathew/Data_1/Peron_ssc-2/with_events'];
 % topdir = ['/mnt/isilon/Hlab/Mat_Evans/Peron_ssc_events'];
 animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
 Rejection_Results = {};
@@ -33,13 +34,21 @@ for i = 1:numel(animals)
     %     cd([topdir,'/',animals{i}]);
     files = dir([topdir,'/',animals{i}]);
     for j = 3:numel(files)
+
+        
         load([topdir,'/',animals{i},'/',files(j).name]);
-        for k = 2:numel(s.timeSeriesArrayHash.value)
+        % Event traces are always the last (N-1)/2 entries
+        N = numel(s.timeSeriesArrayHash.value);
+        ev_files = ((N-1)/2)+2 : N;
+
+%         for k = 2:numel(s.timeSeriesArrayHash.value)
+        for k = 1:numel(ev_files)
             
-            fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
+%             fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
+            fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
             
-            data = s.timeSeriesArrayHash.value{k}.valueMatrix;
-            
+%             data = s.timeSeriesArrayHash.value{k}.valueMatrix;
+            data = s.timeSeriesArrayHash.value{ev_files(k)}.valueMatrix;
             % clean up
             data(find(isnan(data))) = 0;
             
@@ -112,7 +121,7 @@ for i = 1:numel(animals)
     end
 end
 
-%% Summarise into a table
+% Summarise into a table
 fnames = dir('Results_batch1/');
 
 nF = numel(fnames);
@@ -135,8 +144,51 @@ for iF = 1:nF
 end
 
 Network_Rejection_Table = struct2table(result);
-save('Results_batch1/Network_Rejection_Table','Network_Rejection_Table');
+save('Results_batch1/Network_Rejection_Table','Network_Rejection_Table2');
 
+% Cluster noise rejection results
+clear all
+blnLabels = 0;      % write node labels? Omit for large networks
+fontsize = 6;
+
+clusterpars.nreps = 100;
+clusterpars.nLouvain = 5;
+
+files = dir('Results_batch1/Rejected_*');
+
+for i = 1:numel(files);
+    fname = files(i).name(10:end-4);
+    
+    % load data
+    load(['Results_batch1/Rejected_', fname,'.mat'])
+    
+    %% cluster - with noise rejection
+    % construct new null model
+    P = Data.ExpA(Data.ixSignal_Final,Data.ixSignal_Final); % extract relevant part of null model
+    
+    % then cluster
+    if Data.Dn > 0
+        [Connected.QmaxCluster,Connected.Qmax,Connected.ConsCluster,Connected.ConsQ,ctr] = ...
+            ConsensusCommunityDetect(Data.Asignal_final,P,1+Data.Dn,1+Data.Dn,clusterpars.nreps);
+    else
+        Connected.QmaxCluster = []; Connected.Qmax = 0; Connected.ConsCluster = []; Connected.ConsQ = 0;
+    end
+    % Louvain algorithm
+    [Connected.LouvCluster,Connected.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.Asignal_final,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    
+    %% cluster - without noise rejection
+    if Data.Dn > 0
+        [Full.QmaxCluster,Full.Qmax,Full.ConsCluster,Full.ConsQ,~] = ...
+            ConsensusCommunityDetect(Data.A,Data.ExpA,1+Data.Dn,1+Data.Dn);
+    else
+        Full.QmaxCluster = []; Full.Qmax = 0; Full.ConsCluster = []; Full.ConsQ = 0;
+    end
+    
+    [Full.LouvCluster,Full.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    
+    %% Save
+    save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
+end
 %% ksdensity and scatter of various variables
 % TO Do plot median with label
 figure(1); clf;
