@@ -34,13 +34,12 @@ for i = 1:numel(animals)
     %     cd([topdir,'/',animals{i}]);
     files = dir([topdir,'/',animals{i}]);
     for j = 3:numel(files)
-
         
-        load([topdir,'/',animals{i},'/',files(j).name]);
         % Event traces are always the last (N-1)/2 entries
         N = numel(s.timeSeriesArrayHash.value);
         ev_files = ((N-1)/2)+2 : N;
-
+        
+        load([topdir,'/',animals{i},'/',files(j).name]);
 %         for k = 2:numel(s.timeSeriesArrayHash.value)
         for k = 1:numel(ev_files)
             
@@ -121,7 +120,7 @@ for i = 1:numel(animals)
     end
 end
 
-% Summarise into a table
+%% Summarise into a table
 fnames = dir('Results_batch1/');
 
 nF = numel(fnames);
@@ -144,51 +143,22 @@ for iF = 1:nF
 end
 
 Network_Rejection_Table = struct2table(result);
-save('Results_batch1/Network_Rejection_Table','Network_Rejection_Table2');
+save('Results_batch1/Network_Rejection_Table','Network_Rejection_Table');
 
-% Cluster noise rejection results
-clear all
-blnLabels = 0;      % write node labels? Omit for large networks
+%% Cluster noise rejection results
+blnLabels = 1;      % write node labels? Omit for large networks
 fontsize = 6;
 
 clusterpars.nreps = 100;
 clusterpars.nLouvain = 5;
 
-files = dir('Results_batch1/Rejected_*');
+files = dir('Results_batch1/Rejected_*')
+% load data
+load(['../Results/Rejected_' fname])
 
-for i = 1:numel(files);
-    fname = files(i).name(10:end-4);
-    
-    % load data
-    load(['Results_batch1/Rejected_', fname,'.mat'])
-    
-    %% cluster - with noise rejection
-    % construct new null model
-    P = Data.ExpA(Data.ixSignal_Final,Data.ixSignal_Final); % extract relevant part of null model
-    
-    % then cluster
-    if Data.Dn > 0
-        [Connected.QmaxCluster,Connected.Qmax,Connected.ConsCluster,Connected.ConsQ,ctr] = ...
-            ConsensusCommunityDetect(Data.Asignal_final,P,1+Data.Dn,1+Data.Dn,clusterpars.nreps);
-    else
-        Connected.QmaxCluster = []; Connected.Qmax = 0; Connected.ConsCluster = []; Connected.ConsQ = 0;
-    end
-    % Louvain algorithm
-    [Connected.LouvCluster,Connected.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.Asignal_final,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
-    
-    %% cluster - without noise rejection
-    if Data.Dn > 0
-        [Full.QmaxCluster,Full.Qmax,Full.ConsCluster,Full.ConsQ,~] = ...
-            ConsensusCommunityDetect(Data.A,Data.ExpA,1+Data.Dn,1+Data.Dn);
-    else
-        Full.QmaxCluster = []; Full.Qmax = 0; Full.ConsCluster = []; Full.ConsQ = 0;
-    end
-    
-    [Full.LouvCluster,Full.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
-    
-    %% Save
-    save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
-end
+
+
+
 %% ksdensity and scatter of various variables
 % TO Do plot median with label
 figure(1); clf;
