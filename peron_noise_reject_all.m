@@ -144,9 +144,9 @@ for iF = 1:nF
 end
 
 Network_Rejection_Table = struct2table(result);
-save('Results_batch1/Network_Rejection_Table','Network_Rejection_Table2');
+save('Results_batch1/Network_Rejection_Table2','Network_Rejection_Table');
 
-% Cluster noise rejection results
+%% Cluster noise rejection results
 clear all
 blnLabels = 0;      % write node labels? Omit for large networks
 fontsize = 6;
