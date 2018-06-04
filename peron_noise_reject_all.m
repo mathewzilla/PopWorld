@@ -189,50 +189,253 @@ for i = 1:numel(files);
     %% Save
     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
+
+
+%% Load Rejection table and plot various features
+load('Results_batch1/Network_Rejection_Table2')
+
+%% Identify ca vs events data
+
+%% Load NRstats and match up SVs
+load('/Users/mathew/work/Peron_crcns/noiserejection/NRstats.mat')
+
+% NRstats fields are:
+% 1. Animal, 2. Session, 3. Subvolume, 4. Nretain, 5. Npos, 6. Pretain, 7. normalized Npos
+% 8. Original N cells, 9. Duration of recording, 10. P (correct), 11. P (no lick) - measure of task engagement
+                
+animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
+
+%% First, add columns to Network_Rejection_Table corresponding to Animal, session and subvolume
+this_a = 0;
+this_sess = 0;
+for i = 1:height(Network_Rejection_Table)
+
+    this_row = Network_Rejection_Table.NetworkName{i};
+    an = this_row(1:8);
+    a = find(ismember(animals,an)); % Animal
+    
+    sess = this_row(10:20);
+    % Need to iterate over sessions to get a session number
+    
+    % If this animal and session was seen on the last trial, keep same s.
+    % If this animal but a different session was seen, iterate s.
+    % If this animal was not seen on the last trial, s = 1;
+    if a == this_a
+        if sess == this_sess
+        else
+            s = s+1;
+        end
+    else
+        s = 1;
+    end
+    
+    % Catch for sessions with b in date
+    if strcmp(sess(end),'b')
+        sv = str2num(this_row(32:end));
+    else
+        sv = str2num(this_row(31:end));
+    end
+    
+    % Split logic depending on data vs events (N.B. should have specified the
+    % same length identifier, but didn't)
+    data_YN = this_row(21:24);
+    if strcmp(data_YN,'data')
+        meth = 'calcium';
+    else
+        meth = 'Peron';
+    end
+
+    this_a = a;
+    this_sess = sess;
+    
+    try
+        Network_Rejection_Table.Animal(i) = a;
+        Network_Rejection_Table.Session(i) = s;
+        Network_Rejection_Table.Subvolume(i) = sv;
+        Network_Rejection_Table.QC(i) = 1;
+        Network_Rejection_Table.method{i} = meth;
+        
+        display([this_row,', a = ',num2str(a),', s = ',num2str(s),', sv = ',num2str(sv)])
+    catch
+        Network_Rejection_Table.QC(i) = 0;
+    end
+end
+
+%% Identify learning subvolumes and 
+
+%% Network size vs WCM_Dn/Config_Dn
+figure(1); clf
+subplot(1,3,1)
+plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.WCM_Dn,'.','color',[.5,.5,.5])
+hold all
+plot([0,2000],[0,2000],'k--')
+% xlim([0,2000])
+ylim([0,1000])
+xlabel('Network Size')
+ylabel(['WCM_{Dn}'])
+axis square
+
+subplot(1,3,2)
+plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.Config_Dn,'.','color',[.5,.5,.5])
+hold all
+plot([0,2000],[0,2000],'k--')
+% xlim([0,2000])
+ylim([0,800])
+xlabel('Network Size')
+ylabel(['Config_{Dn}'])
+axis square
+
+subplot(1,3,3)
+plot(Network_Rejection_Table.WCM_Dn,Network_Rejection_Table.Config_Dn,'.','color',[.5,.5,.5])
+hold all
+plot([0,1000],[0,1000],'k--')
+% xlim([0,1000])
+ylim([0,800])
+xlabel(['WCM_{Dn}'])
+ylabel(['Config_{Dn}'])
+axis square
+
+%% Network size vs WCM_RejectionDn/Config_RejectionDn
+figure(2); clf
+subplot(1,3,1)
+plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.WCM_RejectionDn,'.','color',[.5,.5,.5])
+hold all
+% plot([0,2000],[0,2000],'k--')
+% xlim([0,2000])
+% ylim([0,1000])
+xlabel('Network Size')
+ylabel(['WCM_{RejectionDn}'])
+axis square
+
+subplot(1,3,2)
+plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.Config_RejectionDn,'.','color',[.5,.5,.5])
+hold all
+% plot([0,2000],[0,2000],'k--')
+% xlim([0,2000])
+% ylim([0,800])
+xlabel('Network Size')
+ylabel(['Config_{RejectionDn}'])
+axis square
+
+subplot(1,3,3)
+plot(Network_Rejection_Table.WCM_RejectionDn,Network_Rejection_Table.Config_RejectionDn,'.','color',[.5,.5,.5])
+hold all
+% plot([0,1000],[0,1000],'k--')
+% xlim([0,1000])
+% ylim([0,800])
+xlabel(['WCM_{RejectionDn}'])
+ylabel(['Config_{RejectionDn}'])
+axis square
+
+%% Plot learning subvolumes and in separate colours
+
+
 %% ksdensity and scatter of various variables
 % TO Do plot median with label
-figure(1); clf;
+figure(3); clf;
 subplot(2,2,1);
-[y,x] = ksdensity(NRstats(:,4));
-plot(x,y,'k','linewidth',2)
+% [y,x] = ksdensity(Network_Rejection_Table.WCM_Dn);
+% plot(x,y,'k','linewidth',2)
+[y,x] = hist(Network_Rejection_Table.WCM_Dn,100);
+bar(x,y,'k','linewidth',2)
 hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(400,8e-3,['Peak = ',num2str(x(mx),'%.3g')])
-text(400,7.4e-3,['Median = ',num2str(median(NRstats(:,4)),'%.3g')])
-xlabel('Number of retained neurons (Nretain)')
+text(450,50,['Peak = ',num2str(x(mx),'%.3g')])
+text(450,43,['Median = ',num2str(median(Network_Rejection_Table.WCM_Dn),'%.3g')])
+xlabel(['WCM_{Dn}'])
 ylabel('Probability density')
 % title('Nretain')
 
 subplot(2,2,2);
-[y,x] = ksdensity(NRstats(:,5));
-plot(x,y,'k','linewidth',2)
+% [y,x] = ksdensity(Network_Rejection_Table.WCM_RejectionDn);
+[y,x] = hist(Network_Rejection_Table.WCM_RejectionDn,100);
+bar(x,y,'k','linewidth',2)
 hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(60,6.5e-2,['Peak = ',num2str(x(mx),'%.3g')])
-text(60,6e-2,['Median = ',num2str(median(NRstats(:,5)),'%.3g')])
-xlabel('Dimensionality of retained neurons (Npos)')
+text(60,50,['Peak = ',num2str(x(mx),'%.3g')])
+text(60,43,['Median = ',num2str(median(Network_Rejection_Table.WCM_RejectionDn),'%.3g')])
+xlabel(['WCM_{RejectionDn}'])
 ylabel('Probability density')
 % title('Npos')
 
 subplot(2,2,3);
-[y,x] = ksdensity(NRstats(:,6));
-plot(x,y,'k','linewidth',2)
+data = Network_Rejection_Table.Network_Size./Network_Rejection_Table.WCM_RejectionDn;
+% data(find(isinf(data))) = [];
+% [y,x] = ksdensity(data);
+% plot(x,y,'k','linewidth',2)
+[y,x] = hist(data,100);
+bar(x,y,'k','linewidth',2)
 hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(0.4,4,['Peak = ',num2str(x(mx),'%.3g')])
-text(0.4,3.7,['Median = ',num2str(median(NRstats(:,6)),'%.3g')])
-xlabel('Proportion of retained neurons (Pretain)')
+text(60,50,['Peak = ',num2str(x(mx),'%.3g')])
+text(60,43,['Median = ',num2str(median(data),'%.3g')])
+xlabel(['Network Size / WCM_{RejectionDn}'])
 ylabel('Probability density')
 % title('Pretain')
 
 subplot(2,2,4);
-[y,x] = ksdensity(NRstats(:,7));
-plot(x,y,'k','linewidth',2)
+data = Network_Rejection_Table.WCM_Dn./Network_Rejection_Table.WCM_RejectionDn;
+[y,x] = hist(data,100);
+bar(x,y,'k','linewidth',2)
 hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(0.125,8,['Peak = ',num2str(x(mx),'%.3g')])
-text(0.125,7.5,['Median = ',num2str(median(NRstats(:,7)),'%.3g')])
-xlabel('Normalized dimensionality (Npos/Nretain)')
+text(25,67,['Peak = ',num2str(x(mx),'%.3g')])
+text(25,58,['Median = ',num2str(median(data),'%.3g')])
+xlabel(['WCM_{Dn} / WCM_{RejectionDn}'])
 ylabel('Probability density')
 % title('Normalized dimensionality')
 
-print(gcf,'-depsc','-painters','noiserejection/figs/NRksdensity.eps')
+% print(gcf,'-depsc','-painters','noiserejection/figs/NRksdensity.eps')
+
+%% Repeat with Config version
+% TO Do plot median with label
+figure(4); clf;
+subplot(2,2,1);
+% [y,x] = ksdensity(Network_Rejection_Table.WCM_Dn);
+% plot(x,y,'k','linewidth',2)
+[y,x] = hist(Network_Rejection_Table.Config_Dn,100);
+bar(x,y,'k','linewidth',2)
+hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
+text(450,35,['Peak = ',num2str(x(mx),'%.3g')])
+text(450,30,['Median = ',num2str(median(Network_Rejection_Table.Config_Dn),'%.3g')])
+xlabel(['Config_{Dn}'])
+ylabel('Probability density')
+% title('Nretain')
+
+subplot(2,2,2);
+% [y,x] = ksdensity(Network_Rejection_Table.WCM_RejectionDn);
+[y,x] = hist(Network_Rejection_Table.Config_RejectionDn,100);
+bar(x,y,'k','linewidth',2)
+hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
+text(25,165,['Peak = ',num2str(x(mx),'%.3g')])
+text(25,140,['Median = ',num2str(median(Network_Rejection_Table.Config_RejectionDn),'%.3g')])
+xlabel(['Config_{RejectionDn}'])
+ylabel('Probability density')
+% title('Npos')
+
+subplot(2,2,3);
+data = Network_Rejection_Table.Network_Size./Network_Rejection_Table.Config_RejectionDn;
+% data(find(isinf(data))) = [];
+% [y,x] = ksdensity(data);
+% plot(x,y,'k','linewidth',2)
+[y,x] = hist(data,100);
+bar(x,y,'k','linewidth',2)
+hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
+text(800,160,['Peak = ',num2str(x(mx),'%.3g')])
+text(800,140,['Median = ',num2str(median(data),'%.3g')])
+xlabel(['Network Size / Config_{RejectionDn}'])
+ylabel('Probability density')
+% title('Pretain')
+
+subplot(2,2,4);
+data = Network_Rejection_Table.WCM_Dn./Network_Rejection_Table.Config_RejectionDn;
+[y,x] = hist(data,100);
+bar(x,y,'k','linewidth',2)
+hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
+text(220,115,['Peak = ',num2str(x(mx),'%.3g')])
+text(220,100,['Median = ',num2str(median(data),'%.3g')])
+xlabel(['Config_{Dn} / Config_{RejectionDn}'])
+ylabel('Probability density')
+% title('Normalized dimensionality')
+
+% print(gcf,'-depsc','-painters','noiserejection/figs/NRksdensity.eps')
+
 %% Does dataset size or duration affect noise rejection or dimensionality?
 figure(2);clf;
 
