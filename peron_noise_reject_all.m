@@ -29,14 +29,18 @@ optionsReject.Interval = 'CI';
 topdir = ['/media/mathew/Data_1/Peron_ssc-2/with_events'];
 % topdir = ['/mnt/isilon/Hlab/Mat_Evans/Peron_ssc_events'];
 animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
-Rejection_Results = {};
+%%
 for i = 1:numel(animals)
     %     cd([topdir,'/',animals{i}]);
     files = dir([topdir,'/',animals{i}]);
     for j = 3:numel(files)
         
-        
         load([topdir,'/',animals{i},'/',files(j).name]);
+        % Special case for animal 4 
+        if i == 4
+            s = dat;
+        end
+        
         % Event traces are always the last (N-1)/2 entries
         N = numel(s.timeSeriesArrayHash.value);
         ev_files = ((N-1)/2)+2 : N;
@@ -45,7 +49,12 @@ for i = 1:numel(animals)
         for k = 1:numel(ev_files)
             
             %             fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
-            fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
+            % Special case for animal 4
+            if i == 4
+                fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
+            else
+                fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
+            end
             
             %             data = s.timeSeriesArrayHash.value{k}.valueMatrix;
             data = s.timeSeriesArrayHash.value{ev_files(k)}.valueMatrix;
@@ -121,7 +130,7 @@ for i = 1:numel(animals)
     end
 end
 
-% Summarise into a table
+%% Summarise into a table
 fnames = dir('Results_batch1/');
 
 nF = numel(fnames);
@@ -196,9 +205,86 @@ load('Results_batch1/Network_Rejection_Table2')
 
 %% Identify ca vs events data
 
-%% Load NRstats and match up SVs
-load('/Users/mathew/work/Peron_crcns/noiserejection/NRstats.mat')
+%% Re-generate NRstats equivalent and match up SVs
+topdir = ['/media/mathew/Data_1/Peron_ssc-2/with_events'];
+% topdir = ['/mnt/isilon/Hlab/Mat_Evans/Peron_ssc_events'];
+animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
 
+for i = 1:numel(animals)
+    %     cd([topdir,'/',animals{i}]);
+    files = dir([topdir,'/',animals{i}]);
+    for j = 3:numel(files)
+        
+        load([topdir,'/',animals{i},'/',files(j).name]);
+        % Special case for animal 4
+        if i == 4
+            s = dat;
+        end
+        
+        % Event traces are always the last (N-1)/2 entries
+        N = numel(s.timeSeriesArrayHash.value);
+        ev_files = ((N-1)/2)+2 : N;
+        
+        %         for k = 2:numel(s.timeSeriesArrayHash.value)
+        for k = 1:numel(ev_files)
+            
+            %             fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
+            % Special case for animal 4
+            if i == 4
+                fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
+            else
+                fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
+            end
+            
+            clear statsTable
+            statsTable.fname = fname;                                      % filename
+            statsTable.method = 'Peron';                                   % Method
+            
+            statsTable.Animal = i;                                         % Animal
+            statsTable.Session = j-2;                                      % Session
+            statsTable.Subvolume = k;                                      % Subvolume
+            
+            data = s.timeSeriesArrayHash.value{ev_files(k)}.valueMatrix;
+            
+            [N,T] = size(data);
+            
+            statsTable.N = N;                                           % Original N cells
+            statsTable.T = T;                                           % Duration of recording
+            
+            % Performance
+            trials = s.timeSeriesArrayHash.descrHash{ev_files(k)}.value{1,2};
+            trial_data = s.trialTypeMat(:,find(ismember(s.trialIds,trials)));
+            
+            % P (correct)
+            statsTable.Pcorrect = (sum(trial_data(1,:)) + sum(trial_data(2,:))) / length(trial_data);
+            
+            % P (no lick) - measure of task engagement
+            statsTable.Pnolick = (sum(trial_data(5,:)) + sum(trial_data(6,:))) / length(trial_data);
+            
+            % eigs
+            data(find(isnan(data))) = 0;
+            [V,D] = eig(cov(data'));
+            egs = sort(diag(D),1,'descend');
+            explained = 100*cumsum(egs)/sum(egs);
+            
+            statsTable.egs = egs;
+            statsTable.explained = explained;
+            
+            
+            
+            % Save these basic stats in a format that is easy to load
+            % alongside noise rejection/clustering data
+            save(['Results_batch1/StatsTable_',fname,'.mat'],'statsTable');
+            
+        end
+    end
+end
+
+
+
+%% NRstats FYI
+% load('/Users/mathew/work/Peron_crcns/noiserejection/NRstats.mat')
+% load('~/work/Peron_crcns/noiserejection/NRstats.mat')
 % NRstats fields are:
 % 1. Animal, 2. Session, 3. Subvolume, 4. Nretain, 5. Npos, 6. Pretain, 7. normalized Npos
 % 8. Original N cells, 9. Duration of recording, 10. P (correct), 11. P (no lick) - measure of task engagement
@@ -261,7 +347,7 @@ for i = 1:height(Network_Rejection_Table)
     end
 end
 
-%% Identify learning subvolumes and colour separately
+%% Identify learning subvolumes to colour separately
 % NB: THERE IS SOMETHING WRONG WITH EVENTS FOR an197522 (animal 4)
 a = 2:5;
 SV  = 1;
@@ -364,8 +450,8 @@ figure(2); clf
 subplot(1,3,3)
 dotcolours = [0,0,0;0.5,0.5,0.5];%varycolor(2);
 subplot(1,3,3)
-plot(0,0,'o','markeredgecolor',dotcolours(1,:),'markerfacecolor',dotcolours(1,:),'markersize',5); hold all
-plot(0,0,'o','markeredgecolor',dotcolours(2,:),'markerfacecolor',dotcolours(2,:),'markersize',5)
+% plot(0,0,'o','markeredgecolor',dotcolours(1,:),'markerfacecolor',dotcolours(1,:),'markersize',5); hold all
+% plot(0,0,'o','markeredgecolor',dotcolours(2,:),'markerfacecolor',dotcolours(2,:),'markersize',5)
 
 for m = 1:2;
     for n = 1:height(Network_Rejection_Table)
@@ -404,9 +490,48 @@ for m = 1:2;
     axis square
 end
 
-legend('Peron','Calcium','location','northeast');
+% legend('Peron','Calcium','location','northeast');
 %% Plot learning subvolumes and in separate colours (coloured rings around dots)
+figure(2)
+colours = varycolor(10);
+edgecolours = colours([2,4,6,8],:);
+subplot(1,3,3)
+for i = 1:4;
+    plot(-5,-5,'o','markeredgecolor',edgecolours(i,:),'markerfacecolor',dotcolours(1,:),'markersize',5);
+end
+for m = 1:2;
+    for animal = 2:5;
+        this_a = find(L_sess.Animal == animal);
+        clear these_m
+        for n = 1:numel(this_a)
+            these_m(n) = strcmp(L_sess.method{this_a(n)},methods{m});
+        end
+        
+        m_array = this_a(find(these_m));
+        subplot(1,3,1);
+        plot(L_sess.Network_Size(m_array),L_sess.WCM_RejectionDn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
+        hold all
+        xlabel('Network Size')
+        ylabel(['WCM_{RejectionDn}'])
+        axis square
+        
+        subplot(1,3,2)
+        plot(L_sess.Network_Size(m_array),L_sess.Config_RejectionDn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
+        hold all
+        xlabel('Network Size')
+        ylabel(['Config_{RejectionDn}'])
+        axis square
+        
+        subplot(1,3,3)
+        plot(L_sess.WCM_RejectionDn(m_array),L_sess.Config_RejectionDn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
+        hold all
+        xlabel(['WCM_{RejectionDn}'])
+        ylabel(['Config_{RejectionDn}'])
+        axis square
+    end
+end
 
+legend('Peron','Calcium','Learning SV 1','Learning SV 2','Learning SV 3','Learning SV 4','location','best')
 
 %% ksdensity and scatter of various variables
 % TO Do plot median with label
@@ -417,8 +542,8 @@ subplot(2,2,1);
 [y,x] = hist(Network_Rejection_Table.WCM_Dn,100);
 bar(x,y,'k','linewidth',2)
 hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(450,50,['Peak = ',num2str(x(mx),'%.3g')])
-text(450,43,['Median = ',num2str(median(Network_Rejection_Table.WCM_Dn),'%.3g')])
+text(450,43,['Peak = ',num2str(x(mx),'%.3g')])
+text(450,35,['Median = ',num2str(median(Network_Rejection_Table.WCM_Dn),'%.3g')])
 xlabel(['WCM_{Dn}'])
 ylabel('Probability density')
 % title('Nretain')
@@ -459,6 +584,7 @@ xlabel(['WCM_{Dn} / WCM_{RejectionDn}'])
 ylabel('Probability density')
 % title('Normalized dimensionality')
 
+suptitle('WCM results overview')
 % print(gcf,'-depsc','-painters','noiserejection/figs/NRksdensity.eps')
 
 %% Repeat with Config version
@@ -512,6 +638,7 @@ xlabel(['Config_{Dn} / Config_{RejectionDn}'])
 ylabel('Probability density')
 % title('Normalized dimensionality')
 
+suptitle('Default config model results overview')
 % print(gcf,'-depsc','-painters','noiserejection/figs/NRksdensity.eps')
 
 %% Does dataset size or duration affect noise rejection or dimensionality?
