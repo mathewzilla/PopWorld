@@ -130,7 +130,7 @@ for i = 1:numel(animals)
     end
 end
 
-%% Summarise into a table
+%% Summarise rejection results into a table
 fnames = dir('Results_batch1/');
 
 nF = numel(fnames);
@@ -206,6 +206,7 @@ load('Results_batch1/Network_Rejection_Table2')
 %% Identify ca vs events data
 
 %% Re-generate NRstats equivalent and match up SVs
+% ALSO computing eigenvalues
 topdir = ['/media/mathew/Data_1/Peron_ssc-2/with_events'];
 % topdir = ['/mnt/isilon/Hlab/Mat_Evans/Peron_ssc_events'];
 animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
@@ -222,29 +223,33 @@ for i = 1:numel(animals)
         end
         
         % Event traces are always the last (N-1)/2 entries
+        % Data traces are entry 2 : end of first half 
         N = numel(s.timeSeriesArrayHash.value);
         ev_files = ((N-1)/2)+2 : N;
+        dat_files = 2 : ((N-1)/2) + 1;
         
         %         for k = 2:numel(s.timeSeriesArrayHash.value)
-        for k = 1:numel(ev_files)
+        for k = 1:numel(dat_files) %ev_files)
             
             %             fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
             % Special case for animal 4
             if i == 4
-                fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
+%                 fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
+                fname = [files(j).name(1:end-4),'_data_s_sv_',num2str(k)]
             else
-                fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
+%                 fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
+                fname = [files(j).name(1:end-9),'_data_s_sv_',num2str(k)]
             end
             
             clear statsTable
             statsTable.fname = fname;                                      % filename
-            statsTable.method = 'Peron';                                   % Method
+            statsTable.method = 'calcium'; %'Peron';                                   % Method
             
             statsTable.Animal = i;                                         % Animal
             statsTable.Session = j-2;                                      % Session
             statsTable.Subvolume = k;                                      % Subvolume
             
-            data = s.timeSeriesArrayHash.value{ev_files(k)}.valueMatrix;
+            data = s.timeSeriesArrayHash.value{dat_files(k)}.valueMatrix;
             
             [N,T] = size(data);
             
@@ -252,7 +257,7 @@ for i = 1:numel(animals)
             statsTable.T = T;                                           % Duration of recording
             
             % Performance
-            trials = s.timeSeriesArrayHash.descrHash{ev_files(k)}.value{1,2};
+            trials = s.timeSeriesArrayHash.descrHash{dat_files(k)}.value{1,2};
             trial_data = s.trialTypeMat(:,find(ismember(s.trialIds,trials)));
             
             % P (correct)
@@ -280,6 +285,66 @@ for i = 1:numel(animals)
     end
 end
 
+%% Summarise stats and rejection results into table (but not eigs - just D to 90% variance) 
+fnames = dir('Results_batch1/Rejected_*');
+stat_fnames = dir('Results_batch1/StatsTable_*');
+nF = numel(fnames);
+nS = numel(stat_fnames);
+if nF ~= nS
+    display('Uh Oh: nF and nS do not match')
+end
+
+clear result
+netCtr = 0;
+for iF = 1:nF
+
+    iS = 0;
+    % Check if there's a matching stat file (they should all be present
+    for j = 1:nS
+        if strcmp(stat_fnames(j).name(12:end-4),fnames(iF).name(10:end-4))
+            iS = j;
+        end
+    end
+    
+    if iS == 0
+        display(['stat file ',num2str(iF),' not found']);
+    else
+        
+        load(['Results_batch1/',fnames(iF).name])
+        
+        result(iF).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
+        
+        result(iF).Network_Size = numel(Data.ixRetain);
+        result(iF).Signal_Size_WCM = numel(Data.ixSignal_Final);
+        result(iF).WCM_Dn = Data.PosDn;
+        result(iF).WCM_RejectionDn = Data.Dn;
+        result(iF).Config_Dn = Control.PosDn;
+        result(iF).Config_RejectionDn = Control.Dn;
+        result(iF).Signal_Components = numel(Data.SignalComp_sizes);
+        
+        % stats stuff
+        load(['Results_batch1/',stat_fnames(iS).name])
+        
+        result(iF).Animal = statsTable.Animal;
+        result(iF).Session = statsTable.Session;
+        result(iF).Subvolume = statsTable.Subvolume;
+        result(iF).N = statsTable.N;
+        result(iF).T = statsTable.T;
+        result(iF).Pcorrect = statsTable.Pcorrect;
+        result(iF).Pnolick = statsTable.Pnolick;
+        result(iF).method = statsTable.method;
+        
+        % First eigenvalue above 90%
+        
+        result(iF).eig90 = find(statsTable.explained > 90,1,'first');
+    end
+    
+    
+    
+end
+
+Network_Rejection_Table = struct2table(result);
+save('Results_batch1/Network_Rejection_Table_wStats','Network_Rejection_Table');
 
 
 %% NRstats FYI
