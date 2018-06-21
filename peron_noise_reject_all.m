@@ -175,6 +175,8 @@ for i = 1:numel(files);
     % construct new null model
     P = Data.ExpA(Data.ixSignal_Final,Data.ixSignal_Final); % extract relevant part of null model
     
+
+    
     % then cluster
     if Data.Dn > 0
         [Connected.QmaxCluster,Connected.Qmax,Connected.ConsCluster,Connected.ConsQ,ctr] = ...
@@ -199,6 +201,53 @@ for i = 1:numel(files);
     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
 
+%% Cluster using output of Control noise rejection
+clear all
+blnLabels = 0;      % write node labels? Omit for large networks
+fontsize = 6;
+
+clusterpars.nreps = 100;
+clusterpars.nLouvain = 5;
+
+files = dir('Results/Rejected_*'); %dir('Results_batch1/Rejected_*');
+
+for i = [1,3]; %1:numel(files);
+    fname = files(i).name(10:end-4);
+    
+    % load data
+%     load(['Results_batch1/Rejected_', fname,'.mat']
+    load(['Results/Rejected_', fname,'.mat'])
+    
+    %% cluster - with noise rejection
+    % construct new null model
+%     P = Data.ExpA(Data.ixSignal_Final,Data.ixSignal_Final); % extract relevant part of null model
+    
+    % Null model from Control rejection
+    P = Control.P;
+    
+    % then cluster
+    if Data.Dn > 0
+        [Connected.QmaxCluster,Connected.Qmax,Connected.ConsCluster,Connected.ConsQ,ctr] = ...
+            ConsensusCommunityDetect(Data.A,P,1+Control.Dn,1+Control.Dn,clusterpars.nreps);
+    else
+        Connected.QmaxCluster = []; Connected.Qmax = 0; Connected.ConsCluster = []; Connected.ConsQ = 0;
+    end
+    % Louvain algorithm
+    [Connected.LouvCluster,Connected.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    
+    %% cluster - without noise rejection
+    if Data.Dn > 0
+        [Full.QmaxCluster,Full.Qmax,Full.ConsCluster,Full.ConsQ,~] = ...
+            ConsensusCommunityDetect(Data.A,Data.ExpA,1+Control.Dn,1+Control.Dn);
+    else
+        Full.QmaxCluster = []; Full.Qmax = 0; Full.ConsCluster = []; Full.ConsQ = 0;
+    end
+    
+    [Full.LouvCluster,Full.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    
+    %% Save
+    save(['Results/Clustered_Config_' fname],'Full','Connected','clusterpars')
+end
 
 %% Load Rejection table and plot various features
 load('Results_batch1/Network_Rejection_Table2')
