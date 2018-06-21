@@ -169,11 +169,13 @@ for i = 1:numel(files);
     fname = files(i).name(10:end-4);
     
     % load data
-    load(['Results_batch1/Rejected_', fname,'.mat'])
+    load(['Results_batch1/Rejected_', fname,'.mat']
     
     %% cluster - with noise rejection
     % construct new null model
     P = Data.ExpA(Data.ixSignal_Final,Data.ixSignal_Final); % extract relevant part of null model
+    
+
     
     % then cluster
     if Data.Dn > 0
@@ -199,6 +201,7 @@ for i = 1:numel(files);
     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
 
+%% Cluster using output of c
 
 %% Load Rejection table and plot various features
 load('Results_batch1/Network_Rejection_Table2')
@@ -310,7 +313,6 @@ for iF = 1:nF
         display(['stat file ',num2str(iF),' not found']);
     else
         
-        load(fnames(iF).name)
         load(['Results_batch1/',fnames(iF).name])
         
         result(iF).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
@@ -325,17 +327,19 @@ for iF = 1:nF
         
         % stats stuff
         load(['Results_batch1/',stat_fnames(iS).name])
+        
         result(iF).Animal = statsTable.Animal;
         result(iF).Session = statsTable.Session;
         result(iF).Subvolume = statsTable.Subvolume;
         result(iF).N = statsTable.N;
         result(iF).T = statsTable.T;
-        result(iF).N = statsTable.N;
-        result(iF).N = statsTable.N;
-        result(iF).N = statsTable.N;
+        result(iF).Pcorrect = statsTable.Pcorrect;
+        result(iF).Pnolick = statsTable.Pnolick;
+        result(iF).method = statsTable.method;
         
         % First eigenvalue above 90%
-        result(iF).N = statsTable.N;
+        
+        result(iF).eig90 = find(statsTable.explained > 90,1,'first');
     end
     
     
@@ -343,7 +347,7 @@ for iF = 1:nF
 end
 
 Network_Rejection_Table = struct2table(result);
-save('Results_batch1/Network_Rejection_Table2','Network_Rejection_Table');
+save('Results_batch1/Network_Rejection_Table_wStats','Network_Rejection_Table');
 
 
 %% NRstats FYI
