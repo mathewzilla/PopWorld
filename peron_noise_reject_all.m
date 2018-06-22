@@ -163,13 +163,15 @@ fontsize = 6;
 clusterpars.nreps = 100;
 clusterpars.nLouvain = 5;
 
-files = dir('Results_batch1/Rejected_*');
+% files = dir('Results_batch1/Rejected_*');
+files = dir('Results/Rejected_*');
 
-for i = 1:numel(files);
+for i = [1,3]; % 1:numel(files);
     fname = files(i).name(10:end-4);
     
     % load data
-    load(['Results_batch1/Rejected_', fname,'.mat'])
+%     load(['Results_batch1/Rejected_', fname,'.mat'])
+    load(['Results/Rejected_', fname,'.mat'])
     
     %% cluster - with noise rejection
     % construct new null model
@@ -198,7 +200,8 @@ for i = 1:numel(files);
     [Full.LouvCluster,Full.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
     
     %% Save
-    save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
+    save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
+%     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
 
 %% Cluster using output of Control noise rejection
