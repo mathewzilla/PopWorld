@@ -75,6 +75,7 @@ for i = 1:numel(animals)
             
             % clean-up A, get largest component, and store as basis for all further analysis
             % all indices are with reference to Data.A
+            Data = {};
             [Data.A,Data.ixRetain,Data.Comps,Data.CompSizes] = prep_A(A);
             
             % get expected distribution of eigenvalues under null model
@@ -141,6 +142,7 @@ for iF = 1:nF
     if any(strfind(fnames(iF).name,'Rejected'))
         netCtr = netCtr + 1;
         result(netCtr).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
+        Data = {};
         load(['Results_batch1/' fnames(iF).name]);
         result(netCtr).Network_Size = numel(Data.ixRetain);
         result(netCtr).Signal_Size_WCM = numel(Data.ixSignal_Final);
@@ -163,15 +165,17 @@ fontsize = 6;
 clusterpars.nreps = 100;
 clusterpars.nLouvain = 5;
 
-% files = dir('Results_batch1/Rejected_*');
-files = dir('Results/Rejected_*');
+files = dir('Results_batch1/Rejected_*');
+% files = dir('Results/Rejected_*');
 
-for i = [1,3]; % 1:numel(files);
-    fname = files(i).name(10:end-4);
+parfor i = 567:numel(files)
+    fname = files(i).name(10:end-4)
     
     % load data
-%     load(['Results_batch1/Rejected_', fname,'.mat'])
-    load(['Results/Rejected_', fname,'.mat'])
+    temp_data = load(['Results_batch1/Rejected_', fname,'.mat']);
+    Data = temp_data.Data;
+    
+%     load(['Results/Rejected_', fname,'.mat'])
     
     %% cluster - with noise rejection
     % construct new null model
@@ -180,27 +184,35 @@ for i = [1,3]; % 1:numel(files);
 
     
     % then cluster
+    Connected = {};
     if Data.Dn > 0
         [Connected.QmaxCluster,Connected.Qmax,Connected.ConsCluster,Connected.ConsQ,ctr] = ...
             ConsensusCommunityDetect(Data.Asignal_final,P,1+Data.Dn,1+Data.Dn,clusterpars.nreps);
     else
         Connected.QmaxCluster = []; Connected.Qmax = 0; Connected.ConsCluster = []; Connected.ConsQ = 0;
     end
-    % Louvain algorithm
-    [Connected.LouvCluster,Connected.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.Asignal_final,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
     
-    %% cluster - without noise rejection
+    % Louvain algorithm
     if Data.Dn > 0
-        [Full.QmaxCluster,Full.Qmax,Full.ConsCluster,Full.ConsQ,~] = ...
+    [Connected.LouvCluster,Connected.LouvQ,~,~] = LouvainCommunityUDnondeterm(Data.Asignal_final,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    else
+        Connected.LouvCluster = []; Connected.LouvQ = 0;
+    end
+    %% cluster - without noise rejection
+    Full = {};
+    if Data.Dn > 0
+        [QmaxCluster,Qmax,ConsCluster, ConsQ,~] = ...
             ConsensusCommunityDetect(Data.A,Data.ExpA,1+Data.Dn,1+Data.Dn);
+        Full.QmaxCluster = QmaxCluster; Full.Qmax = Qmax; Full.ConsCluster = ConsCluster; Full.ConsQ = ConsQ; 
+
     else
         Full.QmaxCluster = []; Full.Qmax = 0; Full.ConsCluster = []; Full.ConsQ = 0;
     end
     
-    [Full.LouvCluster,Full.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
-    
+    [LouvCluster,LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
+    Full.LouvCluster = LouvCluster; Full.LouvQ = LouvQ;
     %% Save
-    save(['Results/Clustered_' fname],'Full','Connected','clusterpars')
+    par_cluster_save(['Results_batch2/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
 %     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
 
@@ -219,7 +231,8 @@ for i = [1,3]; %1:numel(files);
     
     % load data
 %     load(['Results_batch1/Rejected_', fname,'.mat']
-    load(['Results/Rejected_', fname,'.mat'])
+    temp_data = load(['Results/Rejected_', fname,'.mat'])
+    Data = temp_data.Data;
     
     %% cluster - with noise rejection
     % construct new null model
@@ -229,6 +242,7 @@ for i = [1,3]; %1:numel(files);
     P = Control.P;
     
     % then cluster
+    Connected = {};
     if Data.Dn > 0
         [Connected.QmaxCluster,Connected.Qmax,Connected.ConsCluster,Connected.ConsQ,ctr] = ...
             ConsensusCommunityDetect(Data.A,P,1+Control.Dn,1+Control.Dn,clusterpars.nreps);
@@ -239,6 +253,7 @@ for i = [1,3]; %1:numel(files);
     [Connected.LouvCluster,Connected.LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
     
     %% cluster - without noise rejection
+    Full = {};
     if Data.Dn > 0
         [Full.QmaxCluster,Full.Qmax,Full.ConsCluster,Full.ConsQ,~] = ...
             ConsensusCommunityDetect(Data.A,Data.ExpA,1+Control.Dn,1+Control.Dn);
@@ -361,7 +376,7 @@ for iF = 1:nF
     if iS == 0
         display(['stat file ',num2str(iF),' not found']);
     else
-        
+        Data = {};
         load(['Results_batch1/',fnames(iF).name])
         
         result(iF).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
