@@ -92,7 +92,7 @@ var4 = Network_Rejection_Table.Config_RejectionDn;
 
 
 % plot_rejection_pairs(va1,va2,labels);
-figure(6); clf;
+figure(3); clf;
 subplot(1,2,1)
 labels = {'WCM_{Dn}';'WCM_{RejectionDn}'};
 h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
@@ -101,6 +101,24 @@ subplot(1,2,2)
 labels = {'Config_{Dn}';'Config_{RejectionDn}'};
 h(2) = plot_rejection_pairs(var3,var4,labels,colour_ID,edgecolour,dotcolour)
 
+%% Significantly contributing neurons vs N
+var1 = Network_Rejection_Table.N;
+var2 = Network_Rejection_Table.WCM_Dn;
+var3 = Network_Rejection_Table.N;
+var4 = Network_Rejection_Table.Config_Dn;
+
+
+% plot_rejection_pairs(va1,va2,labels);
+figure(4); clf;
+subplot(1,2,1)
+labels = {'N';'WCM_{Dn}'};
+h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
+
+subplot(1,2,2)
+labels = {'N';'Config_{Dn}'};
+h(2) = plot_rejection_pairs(var3,var4,labels,colour_ID,edgecolour,dotcolour)
+
+
 %% Correlates with recording duration
 var1 = Network_Rejection_Table.T;
 var2 = Network_Rejection_Table.WCM_RejectionDn;
@@ -108,7 +126,7 @@ var3 = Network_Rejection_Table.Config_RejectionDn;
 
 
 % plot_rejection_pairs(va1,va2,labels);
-figure(7); clf;
+figure(5); clf;
 subplot(1,2,1)
 labels = {'Time (samples)';'WCM_{RejectionDn}'};
 h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
@@ -128,7 +146,7 @@ nl = 1:numel(var1);
 nl(l) = [];
 
 % plot_rejection_pairs(va1,va2,labels);
-figure(8); clf;
+figure(6); clf;
 subplot(2,2,1)
 labels = {'Time (samples)';'WCM_{RejectionDn}'};
 h(1) = plot_rejection_pairs(var1(l),var2(l),labels,colour_ID(l),edgecolour(l,:),dotcolour(l,:))
@@ -145,207 +163,91 @@ subplot(2,2,4)
 labels = {'Time (samples)';'Config_{RejectionDn}'};
 h(4) = plot_rejection_pairs(var1(nl),var3(nl),labels,colour_ID(nl),edgecolour(nl,:),dotcolour(nl,:))
 
+%% Correlates with recording duration * N (i.e. number of datapoints)
+var1 = Network_Rejection_Table.N .* Network_Rejection_Table.T;
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+var3 = Network_Rejection_Table.Config_RejectionDn;
+
+
+% plot_rejection_pairs(va1,va2,labels);
+figure(7); clf;
+subplot(1,2,1)
+labels = {'N * T';'WCM_{RejectionDn}'};
+h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
+
+subplot(1,2,2)
+labels = {'N * T';'Config_{RejectionDn}'};
+h(2) = plot_rejection_pairs(var1,var3,labels,colour_ID,edgecolour,dotcolour)
+
+%% Same but split to learning sessions vs non learning sessions
+
+var1 = Network_Rejection_Table.N .* Network_Rejection_Table.T;
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+var3 = Network_Rejection_Table.Config_RejectionDn;
+
+l = find(Network_Rejection_Table.Learning == 1);
+nl = 1:numel(var1);
+nl(l) = [];
+
+% plot_rejection_pairs(va1,va2,labels);
+figure(8); clf;
+subplot(2,2,1)
+labels = {'N * T';'WCM_{RejectionDn}'};
+h(1) = plot_rejection_pairs(var1(l),var2(l),labels,colour_ID(l),edgecolour(l,:),dotcolour(l,:))
+
+subplot(2,2,2)
+labels = {'N * T';'Config_{RejectionDn}'};
+h(2) = plot_rejection_pairs(var1(l),var3(l),labels,colour_ID(l),edgecolour(l,:),dotcolour(l,:))
+
+subplot(2,2,3)
+labels = {'N * T';'WCM_{RejectionDn}'};
+h(3) = plot_rejection_pairs(var1(nl),var2(nl),labels,colour_ID(nl),edgecolour(nl,:),dotcolour(nl,:))
+
+subplot(2,2,4)
+labels = {'N * T';'Config_{RejectionDn}'};
+h(4) = plot_rejection_pairs(var1(nl),var3(nl),labels,colour_ID(nl),edgecolour(nl,:),dotcolour(nl,:))
+
+
 %%
 
-for c = 1:numel(unique(colour_ID));
-    these_d = find(colour_ID == c);
-    plot(var1(these_d),var2(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5)
-end
-axis square
-xlabel(labels{1});
-ylabel(labels{2});
-
-% Normalizing one by the other - should be flat
-subplot(1,2,2)
-hold all
-for c = 1:numel(unique(colour_ID));
-    these_d = find(colour_ID == c);
-    plot(var1(these_d),var2(these_d)./var1(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5)
-end
-axis square
-xlabel(labels{1});
-ylabel('Proportion of retained neurons');
-
+    
 legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','best')
-
-
-%% Network size vs WCM_Dn/Config_Dn
-figure(1); clf;
-methods = {'Peron';'calcium'};
-dotcolours = [0,0,0;0.5,0.5,0.5];%varycolor(2);
-subplot(1,3,3)
-plot(0,0,'o','markeredgecolor',dotcolours(1,:),'markerfacecolor',dotcolours(1,:),'markersize',5); hold all
-plot(0,0,'o','markeredgecolor',dotcolours(2,:),'markerfacecolor',dotcolours(2,:),'markersize',5)
-for m = 1:2
-    clear these_m
-    for n = 1:height(Network_Rejection_Table)
-        these_m(n) = strcmp(Network_Rejection_Table.method{n},methods{m});
-    end
-    
-    m_array = find(these_m);
-    subplot(1,3,1)
-    plot(Network_Rejection_Table.Network_Size(m_array),Network_Rejection_Table.WCM_Dn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    % plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.WCM_Dn,'.','color',[.5,.5,.5])
-    hold all
-    plot([0,2000],[0,2000],'k--')
-    xlim([0,2000])
-    ylim([0,1000])
-    xlabel('Network Size')
-    ylabel(['WCM_{Dn}'])
-    axis square
-    
-    subplot(1,3,2)
-    plot(Network_Rejection_Table.Network_Size(m_array),Network_Rejection_Table.Config_Dn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    % plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.Config_Dn,'.','color',[.5,.5,.5])
-    hold all
-    plot([0,2000],[0,2000],'k--')
-    xlim([0,2000])
-    ylim([0,800])
-    xlabel('Network Size')
-    ylabel(['Config_{Dn}'])
-    axis square
-    
-    subplot(1,3,3)
-    plot(Network_Rejection_Table.WCM_Dn(m_array),Network_Rejection_Table.Config_Dn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    % plot(Network_Rejection_Table.WCM_Dn,Network_Rejection_Table.Config_Dn,'.','color',[.5,.5,.5])
-    hold all
-    plot([0,1000],[0,1000],'k--')
-    xlim([0,1000])
-    ylim([0,800])
-    xlabel(['WCM_{Dn}'])
-    ylabel(['Config_{Dn}'])
-    axis square
-end
-
-
-%% Plot learning subvolumes and in separate colours (coloured rings around dots)
-figure(1);
-methods = {'Peron';'calcium'};
-colours = varycolor(10);
-edgecolours = colours([2,4,6,8],:);
-subplot(1,3,3)
-for i = 1:4;
-    plot(-5,-5,'o','markeredgecolor',edgecolours(i,:),'markerfacecolor',dotcolours(1,:),'markersize',5);
-end
-for m = 1:2;
-    for animal = 2:5;
-        this_a = find(L_sess.Animal == animal);
-        clear these_m
-        for n = 1:numel(this_a)
-            these_m(n) = strcmp(L_sess.method{this_a(n)},methods{m});
-        end
-        
-        m_array = this_a(find(these_m));
-        subplot(1,3,1)
-        plot(L_sess.Network_Size(m_array),L_sess.WCM_Dn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-        
-        subplot(1,3,2)
-        plot(L_sess.Network_Size(m_array),L_sess.Config_Dn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-        
-        subplot(1,3,3)
-        plot(L_sess.WCM_Dn(m_array),L_sess.Config_Dn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-        
-        
-    end
-end
-
-
-legend('Peron','Calcium','location','best');
-
-%% Network size vs WCM_RejectionDn/Config_RejectionDn
-figure(2); clf
-subplot(1,3,3)
-dotcolours = [0,0,0;0.5,0.5,0.5];%varycolor(2);
-subplot(1,3,3)
-% plot(0,0,'o','markeredgecolor',dotcolours(1,:),'markerfacecolor',dotcolours(1,:),'markersize',5); hold all
-% plot(0,0,'o','markeredgecolor',dotcolours(2,:),'markerfacecolor',dotcolours(2,:),'markersize',5)
-
-for m = 1:2;
-    for n = 1:height(Network_Rejection_Table)
-        these_m(n) = strcmp(Network_Rejection_Table.method{n},methods{m});
-    end
-    
-    m_array = find(these_m);
-    subplot(1,3,1)
-    plot(Network_Rejection_Table.Network_Size(m_array),Network_Rejection_Table.WCM_RejectionDn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    hold all
-    % plot([0,2000],[0,2000],'k--')
-    % xlim([0,2000])
-    % ylim([0,1000])
-    xlabel('Network Size')
-    ylabel(['WCM_{RejectionDn}'])
-    axis square
-    
-    subplot(1,3,2)
-    plot(Network_Rejection_Table.Network_Size(m_array),Network_Rejection_Table.Config_RejectionDn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    hold all
-    % plot([0,2000],[0,2000],'k--')
-    % xlim([0,2000])
-    % ylim([0,800])
-    xlabel('Network Size')
-    ylabel(['Config_{RejectionDn}'])
-    axis square
-    
-    subplot(1,3,3)
-    plot(Network_Rejection_Table.WCM_RejectionDn(m_array),Network_Rejection_Table.Config_RejectionDn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    hold all
-    % plot([0,1000],[0,1000],'k--')
-    % xlim([0,1000])
-    % ylim([0,800])
-    xlabel(['WCM_{RejectionDn}'])
-    ylabel(['Config_{RejectionDn}'])
-    axis square
-end
-
-% legend('Peron','Calcium','location','northeast');
-%% Plot learning subvolumes and in separate colours (coloured rings around dots)
-figure(2)
-colours = varycolor(10);
-edgecolours = colours([2,4,6,8],:);
-subplot(1,3,3)
-for i = 1:4;
-    plot(-5,-5,'o','markeredgecolor',edgecolours(i,:),'markerfacecolor',dotcolours(1,:),'markersize',5);
-end
-for m = 1:2;
-    for animal = 2:5;
-        this_a = find(L_sess.Animal == animal);
-        clear these_m
-        for n = 1:numel(this_a)
-            these_m(n) = strcmp(L_sess.method{this_a(n)},methods{m});
-        end
-        
-        m_array = this_a(find(these_m));
-        subplot(1,3,1);
-        plot(L_sess.Network_Size(m_array),L_sess.WCM_RejectionDn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-        hold all
-        xlabel('Network Size')
-        ylabel(['WCM_{RejectionDn}'])
-        axis square
-        
-        subplot(1,3,2)
-        plot(L_sess.Network_Size(m_array),L_sess.Config_RejectionDn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-        hold all
-        xlabel('Network Size')
-        ylabel(['Config_{RejectionDn}'])
-        axis square
-        
-        subplot(1,3,3)
-        plot(L_sess.WCM_RejectionDn(m_array),L_sess.Config_RejectionDn(m_array),'o','markeredgecolor',edgecolours(animal-1,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-        hold all
-        xlabel(['WCM_{RejectionDn}'])
-        ylabel(['Config_{RejectionDn}'])
-        axis square
-    end
-end
-
-legend('Peron','Calcium','Learning SV 1','Learning SV 2','Learning SV 3','Learning SV 4','location','best')
 
 %% ksdensity and scatter of various variables
 % TO Do plot median with label
-figure(3); clf;
+var1 = Network_Rejection_Table.WCM_Dn;
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+var3 = Network_Rejection_Table.Network_Size ./ Network_Rejection_Table.N;
+var4 = Network_Rejection_Table.WCM_RejectionDn ./ Network_Rejection_Table.Network_Size;
+
+labels = {'WCM_Dn';'WCM_{RejectionDn}','P(retained)',''};
+
+nbins = 50; 
+
+figure(9); clf;
+for c = 1:2; % Just the two methods
+    these_d = find(colour_ID == c);
+    for i = 1:4;
+        bins = linspace(min(eval(['var',num2str(i)])),max(eval(['var',num2str(i)])),nbins);
+        subplot(2,2,i);
+        h = hist(eval(['var',num2str(i),'(these_d)']),bins);
+%         bar(bins,h./sum(h),'facecolor','none','edgecolor',dotcolour(these_d(1),:),'linewidth',2);
+        stairs(bins,h./sum(h),'color',dotcolour(these_d(1),:),'linewidth',2);
+        hold all
+    end
+end
+%%
+        
+    
 subplot(2,2,1);
 % [y,x] = ksdensity(Network_Rejection_Table.WCM_Dn);
 % plot(x,y,'k','linewidth',2)
+
+
+bins = min();
+hist()
+h = plot(var1(these_d),var2(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5)
+
 [y,x] = hist(Network_Rejection_Table.WCM_Dn,100);
 bar(x,y,'k','linewidth',2)
 hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
@@ -797,54 +699,6 @@ print(gcf,'-depsc','-painters','noiserejection/figs/Lsess_NRvNT3D.eps')
 
 
 %% Local plotting functions (required Matlab 2016a or later)
-
-figure;
-methods = labels;
-dotcolours = colours;
-subplot(1,3,3);
-plot(0,0,'o','markeredgecolor',dotcolours(1,:),'markerfacecolor',dotcolours(1,:),'markersize',5); hold all
-plot(0,0,'o','markeredgecolor',dotcolours(2,:),'markerfacecolor',dotcolours(2,:),'markersize',5)
-for m = 1:2
-    clear these_m
-    for n = 1:height(Network_Rejection_Table)
-        these_m(n) = strcmp(Network_Rejection_Table.method{n},methods{m});
-    end
-    
-    m_array = find(these_m);
-    subplot(1,3,1)
-    plot(Network_Rejection_Table.Network_Size(m_array),Network_Rejection_Table.WCM_Dn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    % plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.WCM_Dn,'.','color',[.5,.5,.5])
-    hold all
-    plot([0,2000],[0,2000],'k--')
-    xlim([0,2000])
-    ylim([0,1000])
-    xlabel('Network Size')
-    ylabel(['WCM_{Dn}'])
-    axis square
-    
-    subplot(1,3,2)
-    plot(Network_Rejection_Table.Network_Size(m_array),Network_Rejection_Table.Config_Dn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    % plot(Network_Rejection_Table.Network_Size,Network_Rejection_Table.Config_Dn,'.','color',[.5,.5,.5])
-    hold all
-    plot([0,2000],[0,2000],'k--')
-    xlim([0,2000])
-    ylim([0,800])
-    xlabel('Network Size')
-    ylabel(['Config_{Dn}'])
-    axis square
-    
-    subplot(1,3,3)
-    plot(Network_Rejection_Table.WCM_Dn(m_array),Network_Rejection_Table.Config_Dn(m_array),'o','markeredgecolor',dotcolours(m,:),'markerfacecolor',dotcolours(m,:),'markersize',5)
-    % plot(Network_Rejection_Table.WCM_Dn,Network_Rejection_Table.Config_Dn,'.','color',[.5,.5,.5])
-    hold all
-    plot([0,1000],[0,1000],'k--')
-    xlim([0,1000])
-    ylim([0,800])
-    xlabel(['WCM_{Dn}'])
-    ylabel(['Config_{Dn}'])
-    axis square
-end
-% end
 
 %% Stripped down single plot figure
 function h = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
