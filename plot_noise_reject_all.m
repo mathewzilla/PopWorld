@@ -7,7 +7,7 @@ load('/Users/mathew/work/PopWorld/Results_batch1/Network_Rejection_Table_wStats.
 % NB: THERE IS SOMETHING WRONG WITH EVENTS FOR an197522 (animal 4)
 a = 2:5;
 SV  = 1;
-Sess = {[2:10]; [2:14]; [2:13,15:17]; [2:11,13]}; % {[1:10]; [1:14]; [2:13,15:17]; [1:11,13]};
+Sess =  {[1:10]; [1:14]; [2:13,15:17]; [1:11,13]}; % {[2:10]; [2:14]; [2:13,15:17]; [2:11,13]}; %
 L_sess = [];
 L_sess_index = [];
 Network_Rejection_Table.Learning = zeros(height(Network_Rejection_Table),1);
@@ -63,11 +63,14 @@ labels = {'N';'Signal network size'};
 figure(1); clf;
 subplot(1,2,1)
 h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
+plot([0,2500],[0,2500],'k--')
 
 subplot(1,2,2)
 var2 = var2./var1;
 labels = {'N','Proportion of retained neurons'};
 h(2) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
+legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','southeast')
+
 
 %% network size vs dimensions
 var1 = Network_Rejection_Table.N;
@@ -83,6 +86,7 @@ h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
 subplot(1,2,2)
 labels = {'N';'Config_{RejectionDn}'};
 h(2) = plot_rejection_pairs(var1,var3,labels,colour_ID,edgecolour,dotcolour)
+legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','northeast')
 
 %% Significantly contributing neurons vs dimensionality
 var1 = Network_Rejection_Table.WCM_Dn;
@@ -100,6 +104,7 @@ h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
 subplot(1,2,2)
 labels = {'Config_{Dn}';'Config_{RejectionDn}'};
 h(2) = plot_rejection_pairs(var3,var4,labels,colour_ID,edgecolour,dotcolour)
+legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','northeast')
 
 %% Significantly contributing neurons vs N
 var1 = Network_Rejection_Table.N;
@@ -118,6 +123,7 @@ subplot(1,2,2)
 labels = {'N';'Config_{Dn}'};
 h(2) = plot_rejection_pairs(var3,var4,labels,colour_ID,edgecolour,dotcolour)
 
+legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','northwest')
 
 %% Correlates with recording duration
 var1 = Network_Rejection_Table.T;
@@ -134,6 +140,8 @@ h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
 subplot(1,2,2)
 labels = {'Time (samples)';'Config_{RejectionDn}'};
 h(2) = plot_rejection_pairs(var1,var3,labels,colour_ID,edgecolour,dotcolour)
+
+legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','northeast')
 
 %% Same but split to learning sessions vs non learning sessions
 
@@ -207,20 +215,17 @@ subplot(2,2,4)
 labels = {'N * T';'Config_{RejectionDn}'};
 h(4) = plot_rejection_pairs(var1(nl),var3(nl),labels,colour_ID(nl),edgecolour(nl,:),dotcolour(nl,:))
 
-
-%%
-
     
 legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','best')
 
-%% ksdensity and scatter of various variables
+%% ksdensity (and scatter ?) of various variables
 % TO Do plot median with label
-var1 = Network_Rejection_Table.WCM_Dn;
-var2 = Network_Rejection_Table.WCM_RejectionDn;
+var1 = Network_Rejection_Table.Config_Dn;
+var2 = Network_Rejection_Table.Config_RejectionDn;
 var3 = Network_Rejection_Table.Network_Size ./ Network_Rejection_Table.N;
-var4 = Network_Rejection_Table.WCM_RejectionDn ./ Network_Rejection_Table.Network_Size;
+var4 = Network_Rejection_Table.Config_RejectionDn ./Network_Rejection_Table.Network_Size;
 
-labels = {'WCM_Dn';'WCM_{RejectionDn}','P(retained)',''};
+labels = {'Config_{Dn}';'Config_{RejectionDn}';'Network Size/ N [P(retained)]';'Config_{RejectionDn}/Network Size [Norm dimensionality]'};
 
 nbins = 50; 
 
@@ -233,242 +238,340 @@ for c = 1:2; % Just the two methods
         h = hist(eval(['var',num2str(i),'(these_d)']),bins);
 %         bar(bins,h./sum(h),'facecolor','none','edgecolor',dotcolour(these_d(1),:),'linewidth',2);
         stairs(bins,h./sum(h),'color',dotcolour(these_d(1),:),'linewidth',2);
+        xlabel(labels{i})
         hold all
     end
 end
-%%
-        
-    
-subplot(2,2,1);
-% [y,x] = ksdensity(Network_Rejection_Table.WCM_Dn);
-% plot(x,y,'k','linewidth',2)
 
+subplot(2,2,1)
+legend('Peron','Calcium')
 
-bins = min();
-hist()
-h = plot(var1(these_d),var2(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5)
-
-[y,x] = hist(Network_Rejection_Table.WCM_Dn,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(450,43,['Peak = ',num2str(x(mx),'%.3g')])
-text(450,35,['Median = ',num2str(median(Network_Rejection_Table.WCM_Dn),'%.3g')])
-xlabel(['WCM_{Dn}'])
-ylabel('Probability density')
-% title('Nretain')
-
-subplot(2,2,2);
-% [y,x] = ksdensity(Network_Rejection_Table.WCM_RejectionDn);
-[y,x] = hist(Network_Rejection_Table.WCM_RejectionDn,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(60,50,['Peak = ',num2str(x(mx),'%.3g')])
-text(60,43,['Median = ',num2str(median(Network_Rejection_Table.WCM_RejectionDn),'%.3g')])
-xlabel(['WCM_{RejectionDn}'])
-ylabel('Probability density')
-% title('Npos')
-
-subplot(2,2,3);
-data = Network_Rejection_Table.Network_Size./Network_Rejection_Table.WCM_RejectionDn;
-% data(find(isinf(data))) = [];
-% [y,x] = ksdensity(data);
-% plot(x,y,'k','linewidth',2)
-[y,x] = hist(data,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(60,50,['Peak = ',num2str(x(mx),'%.3g')])
-text(60,43,['Median = ',num2str(median(data),'%.3g')])
-xlabel(['Network Size / WCM_{RejectionDn}'])
-ylabel('Probability density')
-% title('Pretain')
-
-subplot(2,2,4);
-data = Network_Rejection_Table.WCM_Dn./Network_Rejection_Table.WCM_RejectionDn;
-[y,x] = hist(data,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(25,67,['Peak = ',num2str(x(mx),'%.3g')])
-text(25,58,['Median = ',num2str(median(data),'%.3g')])
-xlabel(['WCM_{Dn} / WCM_{RejectionDn}'])
-ylabel('Probability density')
-% title('Normalized dimensionality')
-
-suptitle('WCM results overview')
-% print(gcf,'-depsc','-painters','noiserejection/figs/NRksdensity.eps')
-
-%% Repeat with Config version
+%% Same again but with the config model
+%% ksdensity and scatter of various variables
 % TO Do plot median with label
-figure(4); clf;
-subplot(2,2,1);
-% [y,x] = ksdensity(Network_Rejection_Table.WCM_Dn);
-% plot(x,y,'k','linewidth',2)
-[y,x] = hist(Network_Rejection_Table.Config_Dn,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(450,35,['Peak = ',num2str(x(mx),'%.3g')])
-text(450,30,['Median = ',num2str(median(Network_Rejection_Table.Config_Dn),'%.3g')])
-xlabel(['Config_{Dn}'])
-ylabel('Probability density')
-% title('Nretain')
+var1 = Network_Rejection_Table.WCM_Dn;
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+var3 = Network_Rejection_Table.Network_Size ./ Network_Rejection_Table.N;
+var4 = Network_Rejection_Table.WCM_RejectionDn ./Network_Rejection_Table.Network_Size;
 
-subplot(2,2,2);
-% [y,x] = ksdensity(Network_Rejection_Table.WCM_RejectionDn);
-[y,x] = hist(Network_Rejection_Table.Config_RejectionDn,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(25,165,['Peak = ',num2str(x(mx),'%.3g')])
-text(25,140,['Median = ',num2str(median(Network_Rejection_Table.Config_RejectionDn),'%.3g')])
-xlabel(['Config_{RejectionDn}'])
-ylabel('Probability density')
-% title('Npos')
+labels = {'WCM_{Dn}';'WCM_{RejectionDn}';'Network Size/ N [P(retained)]';'WCM_{RejectionDn}/Network Size [Norm dimensionality]'};
 
-subplot(2,2,3);
-data = Network_Rejection_Table.Network_Size./Network_Rejection_Table.Config_RejectionDn;
-% data(find(isinf(data))) = [];
-% [y,x] = ksdensity(data);
-% plot(x,y,'k','linewidth',2)
-[y,x] = hist(data,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(800,160,['Peak = ',num2str(x(mx),'%.3g')])
-text(800,140,['Median = ',num2str(median(data),'%.3g')])
-xlabel(['Network Size / Config_{RejectionDn}'])
-ylabel('Probability density')
-% title('Pretain')
+nbins = 50; 
 
-subplot(2,2,4);
-data = Network_Rejection_Table.WCM_Dn./Network_Rejection_Table.Config_RejectionDn;
-[y,x] = hist(data,100);
-bar(x,y,'k','linewidth',2)
-hold all; xlim([min(x),max(x)]); [~,mx] = max(y);
-text(220,115,['Peak = ',num2str(x(mx),'%.3g')])
-text(220,100,['Median = ',num2str(median(data),'%.3g')])
-xlabel(['Config_{Dn} / Config_{RejectionDn}'])
-ylabel('Probability density')
-% title('Normalized dimensionality')
-
-suptitle('Default config model results overview')
-% print(gcf,'-depsc','-painters','noiserejection/figs/NRksdensity.eps')
-
-%% Does dataset size or duration affect noise rejection or dimensionality?
-figure(2);clf;
-
-colours = varycolor(8);
-
-for n = 1:length(NRstats)
-    % N
-    subplot(4,2,1);
-    plot(NRstats(n,8),NRstats(n,4),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Number of neurons')
-    ylabel('Nretain')
-    
-    subplot(4,2,3);
-    plot(NRstats(n,8),NRstats(n,6),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Number of neurons')
-    ylabel('Pretain')
-    
-    subplot(4,2,5);
-    plot(NRstats(n,8),NRstats(n,5),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Number of neurons')
-    ylabel('Npos')
-    
-    subplot(4,2,7);
-    plot(NRstats(n,8),NRstats(n,7),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Number of neurons')
-    ylabel('Npos/Nretain')
-    
-    % T
-    subplot(4,2,2);
-    plot(NRstats(n,9),NRstats(n,4),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Duration of recording (frames)')
-    ylabel('Nretain')
-    
-    subplot(4,2,4);
-    plot(NRstats(n,9),NRstats(n,6),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Duration of recording (frames)')
-    ylabel('Pretain')
-    
-    subplot(4,2,6);
-    plot(NRstats(n,9),NRstats(n,5),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Duration of recording (frames)')
-    ylabel('Npos')
-    
-    subplot(4,2,8);
-    plot(NRstats(n,9),NRstats(n,7),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('Duration of recording (frames)')
-    ylabel('Npos/Nretain')
+figure(10); clf;
+for c = 1:2; % Just the two methods
+    these_d = find(colour_ID == c);
+    for i = 1:4;
+        bins = linspace(min(eval(['var',num2str(i)])),max(eval(['var',num2str(i)])),nbins);
+        subplot(2,2,i);
+        h = hist(eval(['var',num2str(i),'(these_d)']),bins);
+%         bar(bins,h./sum(h),'facecolor','none','edgecolor',dotcolour(these_d(1),:),'linewidth',2);
+        stairs(bins,h./sum(h),'color',dotcolour(these_d(1),:),'linewidth',2);
+        xlabel(labels{i})
+        hold all
+    end
 end
 
-suptitle('Noise rejection values Vs dataset size')
-% print(gcf,'-depsc','-painters','noiserejection/figs/NRvsNT.eps')
+subplot(2,2,1)
+legend('Peron','Calcium')
 
-%% Correlates with performance?
-figure(3); clf;
+%% 'Normalized dimensionality' by N or time
+%% Correlates with recording duration * N (i.e. number of datapoints)
 
-colours = varycolor(8);
+var1 = Network_Rejection_Table.WCM_RejectionDn ./ Network_Rejection_Table.WCM_Dn;
+var2 = Network_Rejection_Table.Config_RejectionDn ./ Network_Rejection_Table.Config_Dn;
+var3 = Network_Rejection_Table.N; 
+var4 = Network_Rejection_Table.T;
 
-for n = 1:length(NRstats)
-    % N
-    subplot(4,2,1);
-    plot(NRstats(n,10),NRstats(n,4),'.','color',colours(NRstats(n,1),:))
+% plot_rejection_pairs(va1,va2,labels);
+figure(11); clf;
+subplot(1,2,1)
+labels = {'N','WCM_{RejectionDn} ./ WCM_{Dn}'};
+h(1) = plot_rejection_pairs(var3,var1,labels,colour_ID,edgecolour,dotcolour)
+
+subplot(1,2,2)
+labels = {'N','Config_{RejectionDn} ./ Config_{Dn}'};
+h(2) = plot_rejection_pairs(var3,var2,labels,colour_ID,edgecolour,dotcolour)
+
+figure(12); clf;
+subplot(1,2,1)
+labels = {'T','WCM_{RejectionDn} ./ WCM_{Dn}'};
+h(1) = plot_rejection_pairs(var4,var1,labels,colour_ID,edgecolour,dotcolour)
+
+subplot(1,2,2)
+labels = {'T','Config_{RejectionDn} ./ Config_{Dn}'};
+h(1) = plot_rejection_pairs(var4,var2,labels,colour_ID,edgecolour,dotcolour)
+
+
+%% Correlates with performance - Learning sessions only
+
+L_sess = find(colour_ID>2);
+var1 = Network_Rejection_Table.WCM_RejectionDn(L_sess);
+var2 = Network_Rejection_Table.Config_RejectionDn(L_sess);
+
+var3 = Network_Rejection_Table.Pnolick(L_sess); 
+var4 = Network_Rejection_Table.Pcorrect(L_sess);
+var5 = Network_Rejection_Table.Session(L_sess);
+var6 = Network_Rejection_Table.Network_Size(L_sess) .* Network_Rejection_Table.T(L_sess);
+var7 = Network_Rejection_Table.WCM_RejectionDn(L_sess) ./ Network_Rejection_Table.Network_Size(L_sess);
+var8 = Network_Rejection_Table.eig90(L_sess);
+% plot_rejection_pairs(va1,va2,labels);
+figure(13); clf;
+subplot(3,2,1)
+labels = {'Session','WCM_{RejectionDn}'};
+h(1) = plot_rejection_pairs_lines(var5,var1,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,2,2)
+labels = {'Session','Config_{RejectionDn}'};
+h(2) = plot_rejection_pairs_lines(var5,var2,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,2,3)
+labels = {'Session','Pnolick'};
+h(1) = plot_rejection_pairs_lines(var5,var3,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,2,4)
+labels = {'Session','Pcorrect'};
+h(1) = plot_rejection_pairs_lines(var5,var4,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,2,5)
+labels = {'Session','Datapoints'};
+h(1) = plot_rejection_pairs_lines(var5,var6,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,2,6)
+% labels = {'Session','WCM_{RejectionDn}./Network Size'};
+labels = {'Session','Eig90'};
+h(1) = plot_rejection_pairs_lines(var5,var8,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+%% Eigenvectors to reach 90% explained variance
+% NL_sess = find(colour_ID<=2);
+var1 = Network_Rejection_Table.N;
+var2 = Network_Rejection_Table.eig90;
+
+% plot_rejection_pairs(va1,va2,labels);
+figure(14); clf;
+labels = {'N','Eig 90'};
+plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
+
+legend('Peron','Calcium')
+
+
+%% Correlates with performance - 3 by 3
+
+L_sess = find(colour_ID>2); % find(colour_ID>2 & colour_ID<7); % find(colour_ID > 6); %
+var1 = Network_Rejection_Table.WCM_RejectionDn(L_sess);
+var2 = Network_Rejection_Table.Config_RejectionDn(L_sess);
+
+var3 = Network_Rejection_Table.Pnolick(L_sess); 
+var4 = Network_Rejection_Table.Pcorrect(L_sess);
+var5 = Network_Rejection_Table.Session(L_sess);
+var6 = Network_Rejection_Table.Network_Size(L_sess) .* Network_Rejection_Table.T(L_sess);
+var7 = Network_Rejection_Table.WCM_RejectionDn(L_sess) ./ Network_Rejection_Table.Network_Size(L_sess);
+var8 = Network_Rejection_Table.eig90(L_sess);
+
+
+% plot_rejection_pairs(va1,va2,labels);
+figure(15); clf;
+
+subplot(3,3,1)
+labels = {'Pnolick','WCM_{RejectionDn}'};
+h(1) = plot_rejection_pairs(var3,var1,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,2)
+labels = {'Pcorrect','WCM_{RejectionDn}'};
+h(1) = plot_rejection_pairs(var4,var1,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,3)
+labels = {'Session','WCM_{RejectionDn}'};
+h(1) = plot_rejection_pairs_lines(var5,var1,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,4)
+labels = {'Pnolick','Config_{RejectionDn}'};
+h(2) = plot_rejection_pairs(var3,var2,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,5)
+labels = {'Pcorrect','Config_{RejectionDn}'};
+h(1) = plot_rejection_pairs(var4,var2,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,6)
+labels = {'Session','Config_{RejectionDn}'};
+h(1) = plot_rejection_pairs_lines(var5,var2,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,7)
+labels = {'Pnolick','Eig90'};
+h(1) = plot_rejection_pairs(var3,var8,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,8)
+labels = {'Pcorrect','Eig90'};
+h(1) = plot_rejection_pairs(var4,var8,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+subplot(3,3,9)
+% labels = {'Session','WCM_{RejectionDn}./Network Size'};
+labels = {'Session','Eig90'};
+h(1) = plot_rejection_pairs_lines(var5,var8,labels,colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+
+%% Loop version of above
+
+L_sess = find(colour_ID>2); % find(colour_ID > 6); % find(colour_ID>2 & colour_ID<7); %
+var1 = Network_Rejection_Table.WCM_RejectionDn(L_sess);
+var2 = Network_Rejection_Table.Config_RejectionDn(L_sess);
+
+var3 = Network_Rejection_Table.Pnolick(L_sess); 
+var4 = Network_Rejection_Table.Pcorrect(L_sess);
+var5 = Network_Rejection_Table.Session(L_sess);
+
+var8 = Network_Rejection_Table.eig90(L_sess);
+
+labelA = {'Pnolick';'Pcorrect';'Session'};
+labelB = {'WCM_{RejectionDn}';'Config_{RejectionDn}';'Eig90'};
+VARA = {var3;var4;var5}
+VARB = {var1;var2;var8};
+
+figure(16); clf;
+hold all
+n = 0;
+for i = 1:3;
+    for j = 1:3;
+        n = n + 1;
+        subplot(3,3,n);
+        h(1) = plot_rejection_pairs(VARA{j},VARB{i},{labelA{j},labelB{i}},colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:))
+    end
+end
+% suptitle('Peron')
+
+%% Need a new variable that counts the sessions that a given subvolume was 
+% present in. I.e. if the first time a cell was imaged on was day 8, it's
+% 'imaging day' 8 would be marked as 1.
+this_a = find(Network_Rejection_Table.Animal == 2);
+%% Add distributions of each 1D variable
+
+L_sess = find(colour_ID<=2); % find(colour_ID > 6); % find(colour_ID>2 & colour_ID<7); %
+var1 = Network_Rejection_Table.WCM_RejectionDn(L_sess);
+var2 = Network_Rejection_Table.Config_RejectionDn(L_sess);
+
+var3 = Network_Rejection_Table.Pnolick(L_sess); 
+var4 = Network_Rejection_Table.Pcorrect(L_sess);
+var5 = Network_Rejection_Table.Session(L_sess);
+
+var8 = Network_Rejection_Table.eig90(L_sess);
+
+labelA = {'Pnolick';'Pcorrect';'Session'};
+labelB = {'WCM_{RejectionDn}';'Config_{RejectionDn}';'Eig90'};
+VARA = {var3;var4;var5};
+VARB = {var1;var2;var8};
+
+figure(17); clf;
+hold all
+nbins = 50; 
+
+for i = 1:3
+    bins = linspace(min(VARA{i}),max(VARA{i}),nbins);
+    subplot(4,4,i);
+    h = hist(VARA{i},bins);
+    %         bar(bins,h./sum(h),'facecolor','none','edgecolor',dotcolour(these_d(1),:),'linewidth',2);
+    stairs(bins,h./sum(h),'k','linewidth',2);
+    xlabel(labelA{i});
+    axis square
     hold all
-    xlabel('P(correct)')
-    ylabel('Nretain')
-    
-    subplot(4,2,3);
-    plot(NRstats(n,10),NRstats(n,6),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('P(correct)')
-    ylabel('Pretain')
-    
-    subplot(4,2,5);
-    plot(NRstats(n,10),NRstats(n,5),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('P(correct)')
-    ylabel('Npos')
-    
-    subplot(4,2,7);
-    plot(NRstats(n,10),NRstats(n,7),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('P(correct)')
-    ylabel('Npos/Nretain')
-    
-    % T
-    subplot(4,2,2);
-    plot(1-NRstats(n,11),NRstats(n,4),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('P(licking)')
-    ylabel('Nretain')
-    
-    subplot(4,2,4);
-    plot(1-NRstats(n,11),NRstats(n,6),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('P(licking)')
-    ylabel('Pretain')
-    
-    subplot(4,2,6);
-    plot(1-NRstats(n,11),NRstats(n,5),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('P(licking)')
-    ylabel('Npos')
-    
-    subplot(4,2,8);
-    plot(1-NRstats(n,11),NRstats(n,7),'.','color',colours(NRstats(n,1),:))
-    hold all
-    xlabel('P(licking)')
-    ylabel('Npos/Nretain')
 end
 
-suptitle('Noise rejection values Vs performance')
-% print(gcf,'-depsc','-painters','noiserejection/figs/NRvsPerf.eps')
+
+for i = 1:3;
+    for j = 1:3;
+        n = 4*i + j;
+        subplot(4,4,n);
+        h(1) = plot_rejection_pairs(VARA{j},VARB{i},{labelA{j},labelB{i}},colour_ID(L_sess),edgecolour(L_sess,:),dotcolour(L_sess,:));
+        axis square
+    end
+end
+
+for c = 1:2;
+    these_d = find(colour_ID(L_sess)==c);
+    for i = 1:3
+        bins = linspace(min(VARB{i}(these_d)),max(VARB{i}(these_d)),nbins);
+        subplot(4,4,4+i*4);
+        h = hist(VARB{i}(these_d),bins);
+        %         bar(bins,h./sum(h),'facecolor','none','edgecolor',dotcolour(these_d(1),:),'linewidth',2);
+        stairs(h./sum(h),bins,'color',dotcolour(L_sess(these_d(1)),:),'linewidth',2);
+        ylabel(labelB{i});
+        axis square
+        hold all
+    end
+end
+% suptitle('Peron')
+
+%% Add distributions of each 1D variable
+
+L_sess = find(colour_ID==1); % find(colour_ID > 6); % find(colour_ID>2 & colour_ID<7); %
+var1 = Network_Rejection_Table.WCM_RejectionDn(L_sess);
+var2 = Network_Rejection_Table.Config_RejectionDn(L_sess);
+
+var3 = Network_Rejection_Table.Pnolick(L_sess); 
+var4 = Network_Rejection_Table.Pcorrect(L_sess);
+var5 = Network_Rejection_Table.Session(L_sess);
+
+var8 = Network_Rejection_Table.eig90(L_sess);
+
+labelA = {'Pnolick';'Pcorrect';'Session'};
+labelB = {'WCM_{RejectionDn}';'Config_{RejectionDn}';'Eig90'};
+VARA = {var3;var4;var5};
+VARB = {var1;var2;var8};
+
+figure(18); clf;
+hold all
+nbins = 40; 
+
+for i = 1:3
+    bins = linspace(min(VARA{i}),max(VARA{i}),nbins);
+    subplot(4,4,i);
+    h = hist(VARA{i},bins);
+    %         bar(bins,h./sum(h),'facecolor','none','edgecolor',dotcolour(these_d(1),:),'linewidth',2);
+    stairs(bins,h./sum(h),'k','linewidth',2);
+    xlabel(labelA{i});
+    axis square
+    hold all
+end
+
+
+for i = 1:3
+    for j = 1:3
+        n = 4*i + j;
+        subplot(4,4,n);
+        [X,imax] = plot_rejection_image(VARA{j},VARB{i},{labelA{j},labelB{i}},nbins/2);
+        axis square
+
+%         if i == 1
+%             subplot(4,4,j)
+%             stairs(mean(X)); xlim([1,nbins+1]);
+%             xticks([5,10,15,20]); xtickformat('%2.2f');
+%             xticklabels(c{1}([5,10,15,20]));
+%             
+%         end
+        
+%         if j == 1
+%             subplot(4,4,4*i+4)
+%             stairs(mean(X'),linspace(nbins,1,nbins)); ylim([1,nbins+1])
+%         end
+    end
+end
+
+for c = 1:2
+    these_d = find(colour_ID(L_sess)==c);
+    if these_d
+        for i = 1:3
+            bins = linspace(min(VARB{i}(these_d)),max(VARB{i}(these_d)),nbins);
+            subplot(4,4,4+i*4);
+            h = hist(VARB{i}(these_d),bins);
+            %         bar(bins,h./sum(h),'facecolor','none','edgecolor',dotcolour(these_d(1),:),'linewidth',2);
+            stairs(h./sum(h),bins,'color',dotcolour(L_sess(these_d(1)),:),'linewidth',2);
+            ylabel(labelB{i});
+            axis square
+            hold all
+        end
+    end
+end
+
+
+suptitle('Peron')
 
 %% Restrict time series analysis to learning sub volumes (one per animal for 4 animals)
 
@@ -706,8 +809,43 @@ cla; hold all
 C = unique(colour_ID);
 for c = 1:numel(C)
     these_d = find(colour_ID == C(c));
-    h = plot(var1(these_d),var2(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5)
+    h = plot(var1(these_d),var2(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5);
 end
+axis square
+xlabel(labels{1});
+ylabel(labels{2});
+end
+
+%% Stripped down single plot figure with lines
+function h = plot_rejection_pairs_lines(var1,var2,labels,colour_ID,edgecolour,dotcolour)
+cla; hold all
+C = unique(colour_ID);
+for c = 1:numel(C)
+    these_d = find(colour_ID == C(c));
+    
+    h = plot(var1(these_d),var2(these_d),'color',dotcolour(these_d(1),:),'linewidth',2);
+    h = plot(var1(these_d),var2(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5);
+end
+axis square
+xlabel(labels{1});
+ylabel(labels{2});
+end
+
+%% Shaded error bar version of above
+function [X,c] = plot_rejection_image(var1,var2,labels,nbins)
+cla; hold all
+
+binsA = linspace(min(var1),max(var1),nbins);
+binsB = linspace(min(var2),max(var2),nbins);
+
+[X,c] = hist3([var1,var2],'Ctrs',{binsA,binsB}); 
+X = rot90(X);
+X = flipud(X)
+h = imagesc(c{1},c{2},X);
+% xlim([floor(min(c{1})),ceil(max(c{1}))])
+ylim([floor(min(c{2})),ceil(max(c{2}))])
+% set(gca,'YDir','reverse')
+ticklabs = get(gca,'xticklabels')
 axis square
 xlabel(labels{1});
 ylabel(labels{2});
