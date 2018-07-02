@@ -168,7 +168,7 @@ clusterpars.nLouvain = 5;
 files = dir('Results_batch1/Rejected_*');
 % files = dir('Results/Rejected_*');
 
-parfor i = 567:numel(files)
+parfor i = 383:566 %numel(files)
     fname = files(i).name(10:end-4)
     
     % load data
@@ -212,7 +212,7 @@ parfor i = 567:numel(files)
     [LouvCluster,LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
     Full.LouvCluster = LouvCluster; Full.LouvQ = LouvQ;
     %% Save
-    par_cluster_save(['Results_batch2/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
+    par_cluster_save(['Results_batch1/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
 %     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
 
