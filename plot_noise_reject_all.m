@@ -441,7 +441,72 @@ end
 %% Need a new variable that counts the sessions that a given subvolume was 
 % present in. I.e. if the first time a cell was imaged on was day 8, it's
 % 'imaging day' 8 would be marked as 1.
+% Basing this on N_unique (defined in peron_noise_reject_all.m)
+
+% First, we need to process the methods separately
+meths = {'calcium';'Peron'}
+for m = 1:2
+    this_m = find(strcmp(Network_Rejection_Table.method,meths{m}));
+    all_svs = unique(Network_Rejection_Table.N_unique);
+    for i = 1:numel(all_svs)
+        this_sv = find(Network_Rejection_Table.N_unique(this_m)==all_svs(i));
+        sv_dates = [];
+        for s = 1:numel(this_sv)
+            Y = Network_Rejection_Table.NetworkName{this_m(this_sv(s))}(10:13);
+            M = Network_Rejection_Table.NetworkName{this_m(this_sv(s))}(15:16);
+            D = Network_Rejection_Table.NetworkName{this_m(this_sv(s))}(18:19);
+            sv_dates = [sv_dates, datenum([Y,'-',M,'-',D])];
+        end
+        Network_Rejection_Table.datenum(this_m(this_sv)) = sv_dates;
+        % Sort dates by datenum and assign increasing values
+        [~,sv_order] = sort(sv_dates);
+        Network_Rejection_Table.sv_order(this_m(this_sv)) = sv_order;
+    end
+end
+
+%% Plot N by datenum - quick way of looking at the experiment
+clf
+for a = 1:8
+    this_a = find(Network_Rejection_Table.Animal(this_m)==a);
+    plot(Network_Rejection_Table.datenum(this_m(this_a)),Network_Rejection_Table.N(this_m(this_a)),'.');
+    hold all;
+end
+        
+        
+        
 this_a = find(Network_Rejection_Table.Animal == 2);
+
+%% Plot non-learning sessions vs session order
+L_sess = find(colour_ID==2); % find(colour_ID > 6); % find(colour_ID>2 & colour_ID<7); %
+var1 = Network_Rejection_Table.WCM_RejectionDn(L_sess);
+var2 = Network_Rejection_Table.Config_RejectionDn(L_sess);
+
+var3 = Network_Rejection_Table.Pnolick(L_sess); 
+var4 = Network_Rejection_Table.Pcorrect(L_sess);
+var5 = Network_Rejection_Table.sv_order(L_sess);
+
+var8 = Network_Rejection_Table.eig90(L_sess);
+
+subvols = Network_Rejection_Table.N_unique(L_sess);
+
+labelA = {'Pnolick';'Pcorrect';'SV_{order}'};
+labelB = {'WCM_{RejectionDn}';'Config_{RejectionDn}';'Eig90'};
+VARA = {var3;var4;var5};
+VARB = {var1;var2;var8};
+
+figure(20); clf;
+hold all
+n = 0;
+for i = 1:3
+    for j = 1:3
+        n = n + 1;
+        subplot(3,3,n);
+        h(1) = plot_rejection_pairs_lines(VARA{j},VARB{i},{labelA{j},labelB{i}},subvols,edgecolour(L_sess,:),dotcolour(L_sess,:));        
+        
+    end
+end
+suptitle('Calcium')
+
 %% Add distributions of each 1D variable
 
 L_sess = find(colour_ID<=2); % find(colour_ID > 6); % find(colour_ID>2 & colour_ID<7); %
@@ -450,7 +515,9 @@ var2 = Network_Rejection_Table.Config_RejectionDn(L_sess);
 
 var3 = Network_Rejection_Table.Pnolick(L_sess); 
 var4 = Network_Rejection_Table.Pcorrect(L_sess);
-var5 = Network_Rejection_Table.Session(L_sess);
+% var5 = Network_Rejection_Table.Session(L_sess);
+var5 = Network_Rejection_Table.sv_order(L_sess);
+subvols = Network_Rejection_Table.N_unique(L_sess);
 
 var8 = Network_Rejection_Table.eig90(L_sess);
 

@@ -481,3 +481,68 @@ for i = 1:height(Network_Rejection_Table)
     end
 end
 
+%% Load pdb.mat (planes database, in Peron_crcns) 
+% and match Network_Rejection_Table entries with plane IDs
+% NB - THIS MUST BE RECOMPUTED WITH NEWER EVENT DATA STRUCTURES
+load('/Users/mathew/work/Peron_crcns/pdb.mat')
+N = height(Network_Rejection_Table);
+for i = 1:N
+        try
+        a = Network_Rejection_Table.Animal(i);
+        s = Network_Rejection_Table.Session(i);
+        sv = Network_Rejection_Table.Subvolume(i);
+        
+        % SVID from pdb.mat
+        Network_Rejection_Table.SVID{i} = pdb{a}.session{s}.subvolume{sv}.SVID;
+        
+        % N from pdb.mat for sanity checking
+        Network_Rejection_Table.SVID_N(i) = pdb{a}.session{s}.subvolume{sv}.cellN;
+        
+        catch
+            display(['Mismatched/missing SVID for ',Network_Rejection_Table.NetworkName{i}])
+            Network_Rejection_Table.SVID{i} = '';
+        end
+end
+
+%% Mark sessions that don't match WRT N, for fixing later (by re-generating)
+% Seems to be a problem with the last two mice...
+for i = 1:N
+    if Network_Rejection_Table.N(i) == Network_Rejection_Table.SVID_N(i)
+        Network_Rejection_Table.pdb_ok(i) = 1;
+    else
+        Network_Rejection_Table.pdb_ok(i) = 0;
+    end
+end
+        
+%% Assign each SV a unique ID, for plotting etc
+% This is still an overestimate of the number of unique subvolumes, as some
+% are replicated but with different IDs (due to only one of
+n = 0;
+for i = 1:8
+    i
+    this_a = find(Network_Rejection_Table.Animal == i);
+    these_svs = unique(Network_Rejection_Table.SVID(this_a));
+    for j = 1:numel(these_svs)
+        n = n + 1;
+        this_sv = find(strcmp(Network_Rejection_Table.SVID(this_a),these_svs{j}));
+        Network_Rejection_Table.sv_unique(this_a(this_sv)) = n;
+        
+    end
+end
+
+
+%% Different version of above based on N cells, which may work better (due to bug in
+% subvolume naming code used in pdb - namely that some subvolumes don't image all planes)
+n = 0;
+for i = 1:8
+    i
+    this_a = find(Network_Rejection_Table.Animal == i);
+    these_Ns = unique(Network_Rejection_Table.N(this_a));
+    for j = 1:numel(these_Ns)
+        n = n + 1;
+        this_N = find(Network_Rejection_Table.N(this_a) == these_Ns(j));
+        Network_Rejection_Table.N_unique(this_a(this_N)) = n;
+        
+    end
+end
+
