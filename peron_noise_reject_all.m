@@ -157,8 +157,22 @@ end
 Network_Rejection_Table = struct2table(result);
 save('Results_batch1/Network_Rejection_Table2','Network_Rejection_Table');
 
-%% Cluster noise rejection results
+%% check which datasets have not been clustered yet
 clear all
+files = dir('Results_batch1/Rejected_*');
+c= [dir('Results_batch1/Clustered*');dir('Results_batch2/Clustered*')];
+clusYN = ones(numel(files),1);
+for i = 1:numel(c)
+    for j = 1:numel(files)
+        if strcmp(c(i).name(10:end),files(j).name(9:end))
+            clusYN(j) = 0;
+        end
+    end
+end
+
+clus_todo = find(clusYN);
+%% Cluster noise rejection results
+% clear all
 blnLabels = 0;      % write node labels? Omit for large networks
 fontsize = 6;
 
@@ -168,8 +182,8 @@ clusterpars.nLouvain = 5;
 files = dir('Results_batch1/Rejected_*');
 % files = dir('Results/Rejected_*');
 
-parfor i = 383:566 %numel(files)
-    fname = files(i).name(10:end-4)
+parfor i = numel(clus_todo) %numel(files) %383:566 ; % 743
+    fname = files(clus_todo(i)).name(10:end-4)
     
     % load data
     temp_data = load(['Results_batch1/Rejected_', fname,'.mat']);
@@ -212,7 +226,7 @@ parfor i = 383:566 %numel(files)
     [LouvCluster,LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
     Full.LouvCluster = LouvCluster; Full.LouvQ = LouvQ;
     %% Save
-    par_cluster_save(['Results_batch1/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
+    par_cluster_save(['Results_batch3/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
 %     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
 
