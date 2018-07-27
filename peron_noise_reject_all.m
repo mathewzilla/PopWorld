@@ -182,7 +182,7 @@ clusterpars.nLouvain = 5;
 files = dir('Results_batch1/Rejected_*');
 % files = dir('Results/Rejected_*');
 
-parfor i = numel(clus_todo) %numel(files) %383:566 ; % 743
+parfor i = 1:numel(clus_todo) %numel(files) %383:566 ; % 743
     fname = files(clus_todo(i)).name(10:end-4)
     
     % load data
