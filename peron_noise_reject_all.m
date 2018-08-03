@@ -160,7 +160,7 @@ save('Results_batch1/Network_Rejection_Table2','Network_Rejection_Table');
 %% check which datasets have not been clustered yet
 clear all
 files = dir('Results_batch1/Rejected_*');
-c= [dir('Results_batch1/Clustered*');dir('Results_batch2/Clustered*')];
+c= [dir('Results_batch1/Clustered*');dir('Results_batch2/Clustered*');dir('Results_batch3/Clustered*')];
 clusYN = ones(numel(files),1);
 for i = 1:numel(c)
     for j = 1:numel(files)
