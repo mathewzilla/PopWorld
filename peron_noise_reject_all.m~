@@ -569,7 +569,7 @@ clear all
 pars.N = 100;           % repeats of permutation
 % pars.alpha = 0; %0.95; % 0.95; % 0;         % confidence interval on estimate of maxiumum eigenvalue for null model; set to 0 for mean
 pars.I = 0;      % interval: set to 0 for mean
-pars.Model = 'Link'; %'Poiss';   % or 'Link'; % which version of sparse WCM null model
+pars.Model = 'Poiss';   % or 'Link'; % which version of sparse WCM null model
 pars.C = 1;             % conversion factor for real-valued weights (set=1 for integers)
 pars.eg_min = 1e-2;      % given machine error, what is acceptable as "zero" eigenvalue
 
@@ -583,7 +583,7 @@ optionsReject.Norm = 'L2';       % L2 is default
 optionsReject.Interval = 'CI';   % rejection if fall within confidence interval - but only if pars.I is not 0!
 
 
-load('/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_02_19.mat'); % 02_18
+load('/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_02_18.mat')
 
 s = dat;
 k = 2
@@ -676,50 +676,22 @@ Data_A = Data;
 load('/Users/mathew/work/PopWorld/197522_rejection/Rejected_an197522_2013_02_22_data_s_sv_1.mat')
 Data_B = Data;
 
-figure(12);
-subplot(2,3,1);
-% imagesc(Data_A.A);
-surf(Data_A.A,'edgecolor','none');
+figure(11);
+subplot(1,3,1);
+imagesc(Data_A.A);
 colorbar
 
-subplot(2,3,4);
-% imagesc(Data_B.A)
-surf(Data_B.A,'edgecolor','none');
+subplot(1,3,2);
+imagesc(Data_B.A)
+colorbar
+%%
+
+figure(12)
+subplot(1,2,1);
+imagesc(Data_A.ExpA);
 colorbar
 
-subplot(2,3,2);
-% imagesc(Data_A.ExpA);
-surf(Data_A.ExpA,'edgecolor','none');
+subplot(1,2,2);
+imagesc(Data_B.ExpA);
 colorbar
 
-subplot(2,3,5);
-% imagesc(Data_B.ExpA);
-surf(Data_B.ExpA,'edgecolor','none');
-colorbar
-
-subplot(2,3,3);
-% imagesc(Data_A.A - Data_A.ExpA);
-surf(Data_A.A - Data_A.ExpA,'edgecolor','none');
-colorbar
-
-subplot(2,3,6);
-% imagesc(Data_B.A - Data_B.ExpA);
-surf(Data_B.A - Data_B.ExpA,'edgecolor','none');
-colorbar
-
-%% Plot column sums
-figure(13);
-clf
-subplot(1,2,1)
-plot(sum(Data_A.A));
-hold all
-plot(sum(Data_A.ExpA));
-plot(sum(Data_A.A - Data_A.ExpA));
-
-subplot(1,2,2)
-plot(sum(Data_B.A));
-hold all
-plot(sum(Data_B.ExpA));
-plot(sum(Data_B.A - Data_B.ExpA));
-
-legend('Sum A','Sum ExpA','Sum A - ExpA')
