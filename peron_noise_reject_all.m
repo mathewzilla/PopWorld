@@ -569,7 +569,7 @@ clear all
 pars.N = 100;           % repeats of permutation
 % pars.alpha = 0; %0.95; % 0.95; % 0;         % confidence interval on estimate of maxiumum eigenvalue for null model; set to 0 for mean
 pars.I = 0;      % interval: set to 0 for mean
-pars.Model = 'Link'; %'Poiss';   % or 'Link'; % which version of sparse WCM null model
+pars.Model = 'Poiss';   % or 'Link'; % which version of sparse WCM null model
 pars.C = 1;             % conversion factor for real-valued weights (set=1 for integers)
 pars.eg_min = 1e-2;      % given machine error, what is acceptable as "zero" eigenvalue
 
@@ -583,7 +583,7 @@ optionsReject.Norm = 'L2';       % L2 is default
 optionsReject.Interval = 'CI';   % rejection if fall within confidence interval - but only if pars.I is not 0!
 
 
-load('/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_02_19.mat'); % 02_18
+load('/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_02_20.mat'); % 02_18
 
 s = dat;
 k = 2
@@ -611,15 +611,27 @@ A(find(A<0)) = 0;
 
 
 %% get expected distribution of eigenvalues under null model (here, sparse WCM)
+Data_Full = Data;
+Data_Sparse = Data;
+% Try with sparse and full poiss
+display('Running poisson sparse WCM')
+tic
+[Data_Sparse.Emodel,diagnostics,Vmodel,Data_Sparse.ExpA] = poissonSparseWCM(Data_Sparse.A,pars.N,pars.C,optionsModel);
+display(['Done in ',num2str(toc),'s'])
 
-switch pars.Model
-    case 'Poiss'
-        [Data.Emodel,diagnostics,Vmodel,Data.ExpA] = poissonSparseWCM(Data.A,pars.N,pars.C,optionsModel);
-    case 'Link'
-        [Data.Emodel,diagnostics,Vmodel,Data.ExpA] = linkSparseWCM(Data.A,pars.N,pars.C,optionsModel);
-    otherwise
-        error('Unrecognised null model specified')
-end
+display('Running poisson full WCM')
+tic
+[Data_Full.Emodel,diagnostics,Vmodel,Data_Full.ExpA] = poissonFullWCM(Data_Full.A,pars.N,pars.C,optionsModel);
+display(['Done in ',num2str(toc),'s'])
+
+% switch pars.Model
+%     case 'Poiss'
+%         [Data.Emodel,diagnostics,Vmodel,Data.ExpA] = poissonSparseWCM(Data.A,pars.N,pars.C,optionsModel);
+%     case 'Link'
+%         [Data.Emodel,diagnostics,Vmodel,Data.ExpA] = linkSparseWCM(Data.A,pars.N,pars.C,optionsModel);
+%     otherwise
+%         error('Unrecognised null model specified')
+% end
 
 %% decompose nodes into signal and noise
 B = Data.A - Data.ExpA;  % modularity matrix using chosen null model
@@ -671,55 +683,215 @@ hold all;
 plot([0,numel(egs)],[0,0],'k--')
 
 %% Load two datasets and compare them
-load('/Users/mathew/work/PopWorld/197522_rejection/Rejected_an197522_2013_02_18_data_s_sv_1.mat')
+load('/Volumes/Extras/197522_rejection/Rejected_an197522_2013_02_20_data_s_sv_1.mat')
 Data_A = Data;
-load('/Users/mathew/work/PopWorld/197522_rejection/Rejected_an197522_2013_02_22_data_s_sv_1.mat')
+load('/Volumes/Extras/197522_rejection/Rejected_an197522_2013_02_21_data_s_sv_1.mat')
 Data_B = Data;
 
-figure(12);
+figure(11);
 subplot(2,3,1);
-% imagesc(Data_A.A);
-surf(Data_A.A,'edgecolor','none');
+imagesc(Data_A.A);
+title('A'); axis square;
 colorbar
 
 subplot(2,3,4);
-% imagesc(Data_B.A)
-surf(Data_B.A,'edgecolor','none');
+imagesc(Data_B.A)
+title('A'); axis square;
 colorbar
 
 subplot(2,3,2);
-% imagesc(Data_A.ExpA);
-surf(Data_A.ExpA,'edgecolor','none');
+imagesc(Data_A.ExpA);
+title('ExpA'); axis square;
 colorbar
 
 subplot(2,3,5);
-% imagesc(Data_B.ExpA);
-surf(Data_B.ExpA,'edgecolor','none');
+imagesc(Data_B.ExpA);
+title('ExpA'); axis square;
 colorbar
 
 subplot(2,3,3);
-% imagesc(Data_A.A - Data_A.ExpA);
-surf(Data_A.A - Data_A.ExpA,'edgecolor','none');
+imagesc(Data_A.A - Data_A.ExpA);
+title('A - ExpA'); axis square;
 colorbar
 
 subplot(2,3,6);
-% imagesc(Data_B.A - Data_B.ExpA);
-surf(Data_B.A - Data_B.ExpA,'edgecolor','none');
+imagesc(Data_B.A - Data_B.ExpA);
+title('A - ExpA'); axis square;
 colorbar
+
+suptitle('20.02.13 (top) vs 21.02.13 (bottom)')
+
+% print(['Figures/noise_rejection/D0_weirdness/2sess_compare_Image'],'-dpdf','-bestfit')
+
+%%
+figure(12);
+subplot(2,3,1);
+surf(Data_A.A,'edgecolor','none');
+title('A')
+% colorbar
+
+subplot(2,3,4);
+surf(Data_B.A,'edgecolor','none');
+title('A')
+% colorbar
+
+subplot(2,3,2);
+surf(Data_A.ExpA,'edgecolor','none');
+title('ExpA')
+% colorbar
+
+subplot(2,3,5);
+surf(Data_B.ExpA,'edgecolor','none');
+title('ExpA')
+% colorbar
+
+subplot(2,3,3);
+surf(Data_A.A - Data_A.ExpA,'edgecolor','none');
+title('A - ExpA')
+% colorbar
+
+subplot(2,3,6);
+surf(Data_B.A - Data_B.ExpA,'edgecolor','none');
+title('A - ExpA')
+% colorbar
+suptitle('20.02.13 (top) vs 21.02.13 (bottom)')
+
+print(['Figures/noise_rejection/D0_weirdness/2sess_compare_Surf'],'-dpdf','-bestfit')
 
 %% Plot column sums
 figure(13);
 clf
 subplot(1,2,1)
-plot(sum(Data_A.A));
+plot(sum(Data_A.A),'linewidth',2);
 hold all
-plot(sum(Data_A.ExpA));
-plot(sum(Data_A.A - Data_A.ExpA));
+plot(sum(Data_A.ExpA),'linewidth',2);
+plot(sum(Data_A.A - Data_A.ExpA),'linewidth',2);
+title('20.02.13')
 
 subplot(1,2,2)
-plot(sum(Data_B.A));
+plot(sum(Data_B.A),'linewidth',2);
 hold all
-plot(sum(Data_B.ExpA));
-plot(sum(Data_B.A - Data_B.ExpA));
+plot(sum(Data_B.ExpA),'linewidth',2);
+plot(sum(Data_B.A - Data_B.ExpA),'linewidth',2);
+title('21.02.13')
 
 legend('Sum A','Sum ExpA','Sum A - ExpA')
+
+% print(['Figures/noise_rejection/D0_weirdness/2sess_compare_Line'],'-dpdf','-bestfit')
+
+%% Compare sparse and full models for different datasets (Mark;s code)
+
+load('/Volumes/Extras/197522_rejection/Rejected_an197522_2013_02_20_data_s_sv_1.mat')
+Data_A = Data;
+load('/Volumes/Extras/197522_rejection/Rejected_an197522_2013_02_21_data_s_sv_1.mat')
+Data_B = Data;
+%% run each null model...
+
+A = Data_A.A;
+
+[linkFull.E,linkFull.D,linkFull.V,linkFull.A] = linkFullWCM(A,pars.N,pars.C);
+
+[poissonFull.E,poissonFull.D,poissonFull.V,poissonFull.A] = poissonFullWCM(A,pars.N,pars.C);
+
+[linkSparse.E,linkSparse.D,linkSparse.V,linkSparse.ExpA,linkSparse.A] = linkSparseWCM(A,pars.N,pars.C,optionsModel);
+
+[poissonSparse.E,poissonSparse.D,poissonSparse.V,poissonSparse.ExpA,poissonSparse.A] = poissonSparseWCM(A,pars.N,pars.C,optionsModel);
+
+test_one.linkFull = linkFull;
+test_one.poissonFull = poissonFull;
+test_one.linkSparse = linkSparse;
+test_one.poissonSparse = poissonSparse;
+
+save('/Volumes/Extras/197522_rejection/Rejection_tests/test_one.mat','test_one','-v7.3')
+
+% Second dataset
+A = Data_B.A; 
+
+[linkFull.E,linkFull.D,linkFull.V,linkFull.A] = linkFullWCM(A,pars.N,pars.C);
+
+[poissonFull.E,poissonFull.D,poissonFull.V,poissonFull.A] = poissonFullWCM(A,pars.N,pars.C);
+
+[linkSparse.E,linkSparse.D,linkSparse.V,linkSparse.ExpA,linkSparse.A] = linkSparseWCM(A,pars.N,pars.C,optionsModel);
+
+[poissonSparse.E,poissonSparse.D,poissonSparse.V,poissonSparse.ExpA,poissonSparse.A] = poissonSparseWCM(A,pars.N,pars.C,optionsModel);
+
+test_two.linkFull = linkFull;
+test_two.poissonFull = poissonFull;
+test_two.linkSparse = linkSparse;
+test_two.poissonSparse = poissonSparse;
+
+save('/Volumes/Extras/197522_rejection/Rejection_tests/test_two.mat','test_two','-v7.3')
+
+%% check output
+% load('/Volumes/Extras/197522_rejection/Rejection_tests/test_one.mat')
+% load('/Volumes/Extras/197522_rejection/Rejection_tests/test_two.mat')
+
+%% test one
+plotY = cell(4,1);
+plotY{1} = [test_one.linkFull.D(:).dStotal];
+plotY{2} = [test_one.poissonFull.D(:).dStotal];
+plotY{3} = [test_one.linkSparse.D(:).dStotal];
+plotY{4} = [test_one.poissonSparse.D(:).dStotal];
+
+figure
+UnpairedUnivariateScatterPlots(gca,plotY,'strX',{'linkF','PoissF','linkS','PoissS'});
+ylabel('Difference in total strength')
+
+plotY{1} = [test_one.linkFull.D(:).dDensity];
+plotY{2} = [test_one.poissonFull.D(:).dDensity];
+plotY{3} = [test_one.linkSparse.D(:).dDensity];
+plotY{4} = [test_one.poissonSparse.D(:).dDensity];
+
+figure
+UnpairedUnivariateScatterPlots(gca,plotY,'strX',{'linkF','PoissF','linkS','PoissS'});
+ylabel('Difference in network density')
+
+%% test two
+plotY = cell(4,1);
+plotY{1} = [test_two.linkFull.D(:).dStotal];
+plotY{2} = [test_two.poissonFull.D(:).dStotal];
+plotY{3} = [test_two.linkSparse.D(:).dStotal];
+plotY{4} = [test_two.poissonSparse.D(:).dStotal];
+
+figure
+UnpairedUnivariateScatterPlots(gca,plotY,'strX',{'linkF','PoissF','linkS','PoissS'});
+ylabel('Difference in total strength')
+
+plotY{1} = [test_two.linkFull.D(:).dDensity];
+plotY{2} = [test_two.poissonFull.D(:).dDensity];
+plotY{3} = [test_two.linkSparse.D(:).dDensity];
+plotY{4} = [test_two.poissonSparse.D(:).dDensity];
+
+figure
+UnpairedUnivariateScatterPlots(gca,plotY,'strX',{'linkF','PoissF','linkS','PoissS'});
+ylabel('Difference in network density')
+
+%% ExpA from ensemble of A
+test_one.poissonFull.ExpA = mean(test_one.poissonFull.A,3);
+test_one.linkFull.ExpA = mean(test_one.linkFull.A,3);
+
+test_two.poissonFull.ExpA = mean(test_two.poissonFull.A,3);
+test_two.linkFull.ExpA = mean(test_two.linkFull.A,3);
+%% Image ExpA
+figure(20);
+subplot(2,2,1);
+imagesc(test_one.poissonSparse.ExpA); colorbar; title('PoissonSparse')
+subplot(2,2,2);
+imagesc(test_one.poissonFull.ExpA); colorbar; title('PoissonFull')
+subplot(2,2,3);
+imagesc(test_one.linkSparse.ExpA); colorbar; title('LinkSparse')
+subplot(2,2,4);
+imagesc(test_one.linkFull.ExpA); colorbar; title('LinkFull')
+suptitle('Feb 20 ExpA')
+
+figure(21);
+subplot(2,2,1);
+imagesc(test_two.poissonSparse.ExpA); colorbar; title('PoissonSparse')
+subplot(2,2,2);
+imagesc(test_two.poissonFull.ExpA); colorbar; title('PoissonFull')
+subplot(2,2,3);
+imagesc(test_two.linkSparse.ExpA); colorbar; title('LinkSparse')
+subplot(2,2,4);
+imagesc(test_two.linkFull.ExpA); colorbar; title('LinkFull')
+suptitle('Feb 21 ExpA')
+
