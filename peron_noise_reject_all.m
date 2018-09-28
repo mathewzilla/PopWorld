@@ -171,6 +171,10 @@ for i = 1:numel(c)
 end
 
 clus_todo = find(clusYN);
+
+% flip clus_todo around to start from the end (and not get stuck on the
+% same files over and over
+% clus_todo = flipud(clus_todo);
 %% Cluster noise rejection results
 % clear all
 blnLabels = 0;      % write node labels? Omit for large networks
@@ -226,7 +230,7 @@ parfor i = 1:numel(clus_todo) %numel(files) %383:566 ; % 743
     [LouvCluster,LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
     Full.LouvCluster = LouvCluster; Full.LouvQ = LouvQ;
     %% Save
-    par_cluster_save(['Results_batch3/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
+    par_cluster_save(['Results_batch4/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
 %     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
 
