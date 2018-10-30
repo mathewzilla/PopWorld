@@ -131,7 +131,7 @@ for i = 1:numel(animals)
     end
 end
 
-%% Summarise rejection results into a table
+% Summarise rejection results into a table
 fnames = dir('Results_batch1/');
 
 nF = numel(fnames);

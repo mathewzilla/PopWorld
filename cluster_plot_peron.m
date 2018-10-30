@@ -301,9 +301,18 @@ end
 % load('/Users/mathew/work/PopWorld/Results/Clustered_Peron_example.mat')
 % load('/Users/mathew/work/PopWorld/Results/Rejected_Peron_example.mat')
 
-load('/Users/mathew/work/PopWorld/197522_rejection/Rejected_an197522_2013_02_18_events_sv_1.mat')
-load('Clustering_Results/Clustered_an197522_2013_02_18_events_sv_1.mat')
-load('/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_02_18.mat'); % 2013_03_07
+% load('/Users/mathew/work/PopWorld/197522_rejection/Rejected_an197522_2013_02_18_events_sv_1.mat')
+% load('Clustering_Results/Clustered_an197522_2013_02_18_events_sv_1.mat')
+% load('/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_02_18.mat'); % 2013_03_07
+
+clear all
+Results_path = '/Volumes/Extras/197522_rejection/Rejection_tests/';
+fname = 'Pre_conv_1K_20_02'; % 'Pre_conv_1K_21_02';
+
+load([Results_path,'Scaling_Results_Table'])
+load([Results_path,'/Rejected_',fname],'Data','Rejection')
+load([Results_path,'/Clustered_',fname],'Full','Connected')
+load('/Volumes/05/Peron_2015/Peron_ssc_events/an197522/an197522_2013_02_20.mat')
 
 %% High skewness neurons
 ca = dat.timeSeriesArrayHash.value{2}.valueMatrix;
@@ -315,6 +324,7 @@ S(isnan(S)) = [];
 imagesc(ca(skew_order,:))
 
 %% Plot 10 most and least skewed cells
+figure
 plot(ca(skew_order(numel(S)-10:numel(S)),:)','r')
 hold all
 plot(ca(skew_order(1:10),:)','k')
@@ -333,6 +343,7 @@ for i = 1:numel(unique_C)
 end
 
 % Identify groups in similarity order
+figure
 [H,h,Ix] = plotClusterMap(Data.A(skewy,skewy),skewy_C,[],[],'S');
 
 % Ordered clusters
@@ -346,59 +357,396 @@ for i = 1:numel(unique(skewy_C))
 end
 
 %% Image first 50 or so
-% imagesc(ca(skewy(Ix(1:50)),:)); % 1:50
-imagesc(ML_s(skewy(Ix(1:500)),:)); % 1:50
+% figure
+imagesc(ca(skewy(Ix(1:500)),:)); % 1:50
+% imagesc(ML_s(skewy(Ix(1:500)),:)); % 1:50
 %% Zooming in
-figure(10);
+figure(19);
 imagesc(ca(skewy(Ix(20:29)),:)); % 1:50 %20:29 %13:21
-figure(11);
+figure(20);
 plot(ca(skewy(Ix(20:29)),:)')
 
 %% Plot each group in turn
-figure(16); clf
+% figure(21); clf
 T = dat.timeSeriesArrayHash.value{2}.time;
 for i = 1: numel(unique(newG))
-    clf
-    this_c = find(newG == i)
-    plot(T,ca(skewy(Ix(this_c)),:)');
+    figure
+    this_c = find(newG == i);
+%     plot(T,ca(skewy(Ix(this_c)),:)');
+    s_ca = ca(skewy(Ix(this_c)),:);
+    s_ca(isnan(s_ca)) = 0;
+%     imagesc(T,1:numel(this_c),x')
+    plot(T,100*nanmean(s_ca))
     title(['Cluster ',num2str(i)])
-    pause
+    %     pause
+    %% Get trial boundaries and plot on top
+    hold all
+    x = dat.timeSeriesArrayHash.value{1,2}.trial;
+    trialId = find(diff(x));
+%     plot([T(trialId);T(trialId)],[-0.5*ones(1,numel(trialId));-1.5*ones(1,numel(trialId))],'k')
+    plot([T(trialId);T(trialId)],[-2.5*ones(1,numel(trialId));-15*ones(1,numel(trialId))],'k')
+        
+    %% Plot touches
+    Touch_G = dat.eventSeriesArrayHash.value{2}.eventTimes{1};
+    Touch_NG = dat.eventSeriesArrayHash.value{2}.eventTimes{2};
+    
+    plot(Touch_G,-2*ones(1,numel(Touch_G)),'r*')
+    plot(Touch_NG,-2.1*ones(1,numel(Touch_NG)),'b*')
+    
+%     ylim([-15,numel(this_c)])
+    ylim([-15,100*max(nanmean(s_ca)) + 1])
+%     pause
+    
+end
+
+%% Load whisker angle and curvature
+A = dat.timeSeriesArrayHash.value{1}.valueMatrix(1:2,:);
+
+K = dat.timeSeriesArrayHash.value{1}.valueMatrix(3:4,:);
+
+% whisker variable times
+W_t = dat.timeSeriesArrayHash.value{1}.time;
+
+%% Dense touch time array
+T_t = zeros(2,length(W_t));
+for i = 1:numel(Touch_G)
+    this_t = Touch_G(i);
+    [~,ix_t] = min(abs(W_t-this_t)) ;
+    T_t(1,ix_t) = 1;
+    
+end
+for i = 1:numel(Touch_NG)
+    this_t = Touch_NG(i);
+    [~,ix_t] = min(abs(W_t-this_t)) ;
+    T_t(2,ix_t) = 1;
     
 end
 
 
-%% Get trial boundaries and plot on top
-hold all
-x = dat.timeSeriesArrayHash.value{1,2}.trial;
-trialId = find(diff(x));
-plot([T(trialId);T(trialId)],[-0.5*ones(1,numel(trialId));-1.5*ones(1,numel(trialId))],'k')
+%% Load sparse event version of data + generate event array
+% load('/Volumes/05/Peron_2015/Deconvolution_test/ML_peron.mat')
+% ncells = numel(ML_peron);
+% nt = numel(ML_peron{1}.fit);
+% ML_s = zeros(ncells,nt);
+% for t = 1:ncells
+%     try
+%         spikes = 7*ML_peron{t}.spikest1; % ML spike output is in dt space
+%         
+%         % Generate dense array of spikes
+%         spk_dense = zeros(nt,1);
+%         spk_dense(round(spikes)) = 1;
+%         ML_s(t,:) = spk_dense;
+%         %     events = conv(spk_dense,kernel)/sum(kernel);
+%         %     ML_e(t,:) = events(1:nt);
+%     end
+% end
 
-%% Plot touches
+%% PSTHs of groups
+% First get trial type info
+
+%% PSTHs
+x = dat.timeSeriesArrayHash.value{1,2}.trial;
+trials = unique(x);
+
+psth_ca = []; psth_ca_L = []; psth_ca_R = []; psth_ca_C = []; psth_ca_IC = []; 
+
+% Trial type - Left or right
+L = unique([find(dat.trialTypeMat(1,trials)), find(dat.trialTypeMat(3,trials))]);
+R = unique([find(dat.trialTypeMat(2,trials)), find(dat.trialTypeMat(4,trials))]);
+
+% Outcome - Correct, incorrect
+C = unique([find(dat.trialTypeMat(1,trials)), find(dat.trialTypeMat(2,trials))]);
+IC = unique([find(dat.trialTypeMat(3,trials)), find(dat.trialTypeMat(4,trials))]);
+
+% Hit, miss, correct rejection, false alarm
+hit = L(ismember(L,C));
+CR = R(ismember(R,C));
+miss = L(ismember(L,IC));
+FA = R(ismember(R,IC));
+
+clear psth_ca psth_ca_L  psth_ca_R  psth_ca_C  psth_ca_IC  
+clear psth_ca_hit psth_ca_CR psth_ca_miss psth_ca_FA
+
+for p = 1:numel(unique(newG))
+    c_ca = [];
+    s_ca = [];
+    
+    this_c = find(newG == p);
+    
+    s_ca = ca(this_c,:);
+    s_ca(isnan(s_ca)) = 0;
+    
+    pop_mean = nanmean(s_ca);
+
+    for i = 1:numel(trials)
+        c_ca(i,:) = [pop_mean(find(x == trials(i))),nan(1,100-numel(find(x == trials(i))))];
+        
+    end
+
+    psth_ca(p,:) = nanmean(c_ca(:,1:50),1);
+    
+
+    
+    psth_ca_L(p,:) = nanmean(c_ca(L,1:50),1);
+    psth_ca_R(p,:) = nanmean(c_ca(R,1:50),1);
+
+    psth_ca_C(p,:) = nanmean(c_ca(C,1:50),1);    
+    psth_ca_IC(p,:) = nanmean(c_ca(IC,1:50),1);
+    
+    
+    psth_ca_hit(p,:) = nanmean(c_ca(hit,1:50),1);
+    psth_ca_CR(p,:) = nanmean(c_ca(CR,1:50),1);
+
+    psth_ca_miss(p,:) = nanmean(c_ca(miss,1:50),1);    
+    psth_ca_FA(p,:) = nanmean(c_ca(FA,1:50),1);
+
+end
+
+%% Calcium times
+x = dat.timeSeriesArrayHash.value{1,2}.trial;
+trials = unique(x);
+
+trialStarts = [];
+for i = 1:numel(trials)
+    trialStarts(i) = dat.trialStartTimes(find(dat.trialIds == trials(i)));
+    ca_t(i,:) = [dat.timeSeriesArrayHash.value{2}.time(x==trials(i))-trialStarts(i),nan(1,100-numel(find(x == trials(i))))];
+end
+
+ca_ts = nanmean(ca_t(:,1:50));
+%% Plot psths of all groups
+
+% loop to plot event lines on top (pole up,down,reward port)
+
+for f = [20,21,22]
+    figure(f);clf;
+    if f ~= 20
+        for j = 1:4
+            subplot(2,2,j)
+            event_subset = [1,2,7];
+            for i = 1:numel(event_subset)
+                plot(med_events(event_subset(i))*ones(2,1),[0,0.1],'linewidth',2,'color','k');
+                hold all
+            end
+        end
+    else
+        event_subset = [1,2,7];
+        for i = 1:numel(event_subset)
+            plot(med_events(event_subset(i))*ones(2,1),[0,0.1],'linewidth',2,'color','k');
+            hold all
+        end
+    end
+    
+end
+
+
+figure(20); 
+plot(ca_ts,psth_ca','linewidth',2)
+title('Population PSTH')
+ xlim([0,7000])
+legend('Pole up','Pole down','Reward cue')
+xlabel('Time (ms)')
+ylabel('Cluster mean Ca2+')
+ylim([0,0.1])
+
+% Two 2x2 plots of the trial type/ performance data
+figure(21); 
+ax(1) = subplot(2,2,1);
+plot(ca_ts,psth_ca_L','linewidth',2); title('Left')
+ax(2) = subplot(2,2,2);
+plot(ca_ts,psth_ca_R','linewidth',2); title('Right')
+ax(3) = subplot(2,2,3);
+plot(ca_ts,psth_ca_C','linewidth',2); title('Correct')
+xlabel('Time (ms)')
+ylabel('Cluster mean Ca2+')
+ax(4) = subplot(2,2,4);
+plot(ca_ts,psth_ca_IC','linewidth',2); title('Incorrect')
+linkaxes(ax)
+xlim([0,7000])
+ylim([0,0.1])
+
+figure(22); 
+bx(1) = subplot(2,2,1);
+plot(ca_ts,psth_ca_hit','linewidth',2); title('Correct Left')
+bx(2) = subplot(2,2,2);
+plot(ca_ts,psth_ca_CR','linewidth',2); title('Correct Right')
+bx(3) = subplot(2,2,3);
+plot(ca_ts,psth_ca_miss','linewidth',2); title('Incorrect Left')
+xlabel('Time (ms)')
+ylabel('Cluster mean Ca2+')
+bx(4) = subplot(2,2,4);
+plot(ca_ts,psth_ca_FA','linewidth',2); title('Incorrect Right')
+linkaxes(bx)
+xlim([0,7000])
+ylim([0,0.1])
+
+%% Create long dense vectors of all event data
+
+% whisker variable times
+W_t = dat.timeSeriesArrayHash.value{1}.time;
 Touch_G = dat.eventSeriesArrayHash.value{2}.eventTimes{1};
 Touch_NG = dat.eventSeriesArrayHash.value{2}.eventTimes{2};
 
-plot(Touch_G,-2*ones(1,numel(Touch_G)),'r*')
-plot(Touch_NG,-2.1*ones(1,numel(Touch_NG)),'b*')
-
-%% Load sparse event version of data + generate event array
-load('/Volumes/05/Peron_2015/Deconvolution_test/ML_peron.mat')
-ncells = numel(ML_peron);
-nt = numel(ML_peron{1}.fit);
-ML_s = zeros(ncells,nt);
-for t = 1:ncells
-    try
-        spikes = 7*ML_peron{t}.spikest1; % ML spike output is in dt space
-        
-        % Generate dense array of spikes
-        spk_dense = zeros(nt,1);
-        spk_dense(round(spikes)) = 1;
-        ML_s(t,:) = spk_dense;
-        %     events = conv(spk_dense,kernel)/sum(kernel);
-        %     ML_e(t,:) = events(1:nt);
-    end
+    
+T_t = zeros(2,length(W_t));
+for i = 1:numel(Touch_G)
+    this_t = Touch_G(i);
+    [~,ix_t] = min(abs(W_t-this_t)) ;
+    T_t(1,ix_t) = 1;
+    
+end
+for i = 1:numel(Touch_NG)
+    this_t = Touch_NG(i);
+    [~,ix_t] = min(abs(W_t-this_t)) ;
+    T_t(2,ix_t) = 1;
+    
 end
 
-%% PSTHs of groups
+%% Event array
+% Events are as follows:
+%     'times when the pole was accessible to the whiskers.'
+%     'times when the pole was touched by whiskers.'
+%     'left lickport contact'
+%     'right lickport contact'
+%     'left water reward delivery'
+%     'right water reward delivery'
+%     'auditory cue signaling animal to collect reward'
+%     'First touch left'
+%     'First touch right'
+events = [];
+touches = [];
+
+trialStarts = []; dat.trialStartTimes(trials);
+
+for i = 1:numel(trials)
+    trialStarts(i) = dat.trialStartTimes(find(dat.trialIds == trials(i)));
+    
+ 
+        % Pole up
+        x = find(dat.eventSeriesArrayHash.value{1}.eventTrials == trials(i),1,'first');
+        events(1,i) = max([0,dat.eventSeriesArrayHash.value{1}.eventTimes(x) - trialStarts(i)]);
+
+        % Pole down
+        x = find(dat.eventSeriesArrayHash.value{1}.eventTrials == trials(i),1,'last');
+        events(2,i) = max([0,dat.eventSeriesArrayHash.value{1}.eventTimes(x) - trialStarts(i)]);
+
+        % Lick left
+        x = find(dat.eventSeriesArrayHash.value{3}.eventTrials == trials(i),1,'first');
+        events(3,i) = max([0,dat.eventSeriesArrayHash.value{3}.eventTimes(x) - trialStarts(i)]);
+
+        % Lick right
+        x = find(dat.eventSeriesArrayHash.value{4}.eventTrials == trials(i),1,'first');
+        events(4,i) = max([0,dat.eventSeriesArrayHash.value{4}.eventTimes(x) - trialStarts(i)]);
+
+        % Reward left
+        x = find(dat.eventSeriesArrayHash.value{5}.eventTrials == trials(i),1,'first');
+        events(5,i) = max([0,dat.eventSeriesArrayHash.value{5}.eventTimes(x) - trialStarts(i)]);
+
+        % Reward right
+        x = find(dat.eventSeriesArrayHash.value{6}.eventTrials == trials(i),1,'first');
+        events(6,i) = max([0,dat.eventSeriesArrayHash.value{6}.eventTimes(x) - trialStarts(i)]);
+
+        % reward cue
+        x = find(dat.eventSeriesArrayHash.value{7}.eventTrials == trials(i),1,'first');
+        events(7,i) = max([0,dat.eventSeriesArrayHash.value{7}.eventTimes(x) - trialStarts(i)]);
+
+        x = find(dat.eventSeriesArrayHash.value{2}.eventTrials{1} == trials(i),1,'first');
+        events(8,i) = max([0,dat.eventSeriesArrayHash.value{2}.eventTimes{1}(x) - trialStarts(i)]);
+
+        x = find(dat.eventSeriesArrayHash.value{2}.eventTrials{2} == trials(i),1,'first');
+        events(9,i) = max([0,dat.eventSeriesArrayHash.value{2}.eventTimes{2}(x) - trialStarts(i)]);
+    
+    
+end
+
+% events(:,1) = zeros(9,1);
+clf
+plot(events');
+legend('Pole up','Pole down','Lick left','Lick right','Reward left','Reward right','Reward cue','Touch left','Touch right')
+
+%% Distribution plot of each
+
+figure(24); clf
+% subplot(2,1,1);
+% plot(ca_ts,psth_ca','linewidth',2)
+% xlim([0,7000])
+
+bmap = brewermap(9,'Paired');
+edges = linspace(0,5000,101);
+% subplot(2,1,2);
+for i = 1: size(events,1)
+    h = histc(events(i,find(events(i,:))),edges);
+    stairs(edges,h/sum(h),'linewidth',2,'color',bmap(i,:)); hold all
+    %      [F,XI] = ksdensity(events(i,find(events(i,:)))); hold all
+    %      plot(XI,F/sum(F),'linewidth',2,'color',bmap(i,:))
+    
+end
+
+legend('Pole up','Pole down','Lick left','Lick right','Reward left','Reward right','Reward cue','Touch left','Touch right')
+xlim([0,7000])
+xlabel('Time (ms)')
+ylabel('Frequency (normalized trials)')
+
+%% Plot psth with line for event times
+for i = 1:size(events,1)
+    med_events(i) = median(events(i,find(events(i,:))));
+end
+
+figure(25);
+clf
+bmap2 = brewermap(size(psth_ca,1),'Spectral');
+ca_leg = {};
+for i = 1:size(psth_ca,1)
+plot(ca_ts,psth_ca(i,:),'linewidth',2,'color',bmap2(i,:))
+ca_leg = {ca_leg{:},['Grp ' num2str(i)]};
+xlim([0,7000])
+hold all
+end
+
+for i = 1:numel(med_events)
+    plot(med_events(i)*ones(2,1),[0,0.1],'linewidth',2,'color',bmap(i,:))
+end
+
+legend(ca_leg{:},'Pole up','Pole down','Lick left','Lick right','Reward left','Reward right','Reward cue','Touch left','Touch right')
+
+%% Times that correspond to each trial
+
+
+%% Create imaging-rate versions of event + whisker data
+A = dat.timeSeriesArrayHash.value{1}.valueMatrix(1:2,:);
+
+K = dat.timeSeriesArrayHash.value{1}.valueMatrix(3:4,:);
+
+
+
+
+%% Create a psth of event + whisker data
+
+x = dat.timeSeriesArrayHash.value{1,2}.trial;
+trials = unique(x);
+trialStarts = [];
+for i = 1:numel(trials)
+    trialStarts(i) = dat.trialStartTimes(find(dat.trialIds == i));
+end
+
+
+    for i = 1:numel(trials)
+        c_ca(i,:) = [pop_mean(find(x == trials(i))),nan(1,100-numel(find(x == trials(i))))];
+    end
+
+        psth_ca(p,:) = nanmean(c_ca(:,1:50),1);
+    
+
+    
+    psth_ca_L(p,:) = nanmean(c_ca(L,1:50),1);
+    psth_ca_R(p,:) = nanmean(c_ca(R,1:50),1);
+    psth_ca_C(p,:) = nanmean(c_ca(C,1:50),1);    
+    psth_ca_IC(p,:) = nanmean(c_ca(IC,1:50),1);
+    psth_ca_hit(p,:) = nanmean(c_ca(hit,1:50),1);
+    psth_ca_CR(p,:) = nanmean(c_ca(CR,1:50),1);
+    psth_ca_miss(p,:) = nanmean(c_ca(miss,1:50),1);    
+    psth_ca_FA(p,:) = nanmean(c_ca(FA,1:50),1);
+    
+%% Correlation timescales of each group? 
 
 %% Aligned raster of some kind
 % imagesc(Data.A(skewy(Ix)),Data.A(skewy(Ix)))
