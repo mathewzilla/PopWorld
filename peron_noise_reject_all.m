@@ -146,9 +146,6 @@ parfor i = 1:numel(animals)
     end
 end
 
-%% Commenting everything after the parfor loop for now
-
- 
 
 %% Summarise rejection results into a table
 results_folder = 'Results_reject_preround/';
