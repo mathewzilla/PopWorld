@@ -30,34 +30,42 @@ topdir = ['/media/mathew/Data_1/Peron_ssc-2/with_events'];
 % topdir = ['/mnt/isilon/Hlab/Mat_Evans/Peron_ssc_events'];
 animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
 %%
-for i = 1:numel(animals)
+parfor i = 1:numel(animals)
     %     cd([topdir,'/',animals{i}]);
     files = dir([topdir,'/',animals{i}]);
     for j = 3:numel(files)
-        
-        load([topdir,'/',animals{i},'/',files(j).name]);
+        j
+        x = load([topdir,'/',animals{i},'/',files(j).name]);
         % Special case for animal 4 
         if i == 4
-            s = dat;
+            s = x.dat;
+            
+        else
+            s = x.s;
         end
         
-        % Event traces are always the last (N-1)/2 entries
+        % Calcium traces are entried 2 : (N+1)/2
+        % Event traces are always the last (N+1)/2 entries (but need to
+        % start counting after the calcium traces, hence the +1)
         N = numel(s.timeSeriesArrayHash.value);
-        ev_files = ((N-1)/2)+2 : N;
+        ca_files = 2 : ((N+1)/2);
+        ev_files = ((N+1)/2)+1 : N;
         
         %         for k = 2:numel(s.timeSeriesArrayHash.value)
-        for k = 1:numel(ev_files)
+        for k = 1:numel(ca_files) %(ev_files)
             
             %             fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
             % Special case for animal 4
             if i == 4
-                fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
+                fname = [files(j).name(1:end-4),'_data_s_sv_',num2str(k)]
+%                 fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
             else
-                fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
+                fname = [files(j).name(1:end-9),'_data_s_sv_',num2str(k)]
+%                 fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
             end
             
             %             data = s.timeSeriesArrayHash.value{k}.valueMatrix;
-            data = s.timeSeriesArrayHash.value{ev_files(k)}.valueMatrix;
+            data = s.timeSeriesArrayHash.value{ca_files(k)}.valueMatrix;
             % clean up
             data(find(isnan(data))) = 0;
             
@@ -73,19 +81,24 @@ for i = 1:numel(animals)
             % Restrict to positive (for now)
             A(find(A<0)) = 0;
             
+            % Set links below max(A(:))/C to zero
+            upper_A = triu(A,1);
+            link_thresh = max(upper_A(:))/pars.C;         
+            A(find(A<link_thresh)) = 0;
+            
             % clean-up A, get largest component, and store as basis for all further analysis
             % all indices are with reference to Data.A
             Data = {};
             [Data.A,Data.ixRetain,Data.Comps,Data.CompSizes] = prep_A(A);
             
             % get expected distribution of eigenvalues under null model
-            [Data.Emodel,diagnostics,Vmodel,Data.ExpA] = RndPoissonConfigModel(Data.A,pars.N,pars.C,optionsModel);
-            
+            [Data.E,Data.D,Vmodel,Data.ExpA] = RndPoissonConfigModel(Data.A,pars.N,pars.C,optionsModel);
+%             [Data.E,Data.D,Data.V,Data.ExpA,~,Data.A_z,Data.L_z] = poissonSparseWCMReal(Data.A,pars.N,pars.C,optionsModel)
             %% decompose nodes into signal and noise
             B = Data.A - Data.ExpA;  % modularity matrix using chosen null model
             
             % find low-dimensional projection
-            [Data.Dspace,Data.ixpos,Data.Dn,Data.EigEst,Data.Nspace,Data.ixneg,Data.Dneg,Data.NEigEst] = LowDSpace(B,Data.Emodel,pars.I); % to just obtain low-dimensional projection; Data.Dn = number of retained eigenvectors
+            [Data.Dspace,Data.ixpos,Data.Dn,Data.EigEst,Data.Nspace,Data.ixneg,Data.Dneg,Data.NEigEst] = LowDSpace(B,Data.E,pars.I); % to just obtain low-dimensional projection; Data.Dn = number of retained eigenvectors
             
             % compute dimensions based on just positive eigenvalues
             egs = eig(B);  % eigenspectra of data modularity matrix
@@ -93,7 +106,7 @@ for i = 1:numel(animals)
             Data.PosDn = sum(egs > pars.eg_min);
             
             % node rejection within low-dimensional projection
-            Rejection = NodeRejection(B,Data.Emodel,pars.I,Vmodel,optionsReject); % N.B. also calls LowDSpace function to find projections
+            Rejection = NodeRejection(B,Data.E,pars.I,Vmodel,optionsReject); % N.B. also calls LowDSpace function to find projections
             
             % new signal matrix
             Data.Asignal = Data.A(Rejection.ixSignal,Rejection.ixSignal);
@@ -111,28 +124,35 @@ for i = 1:numel(animals)
             Data.ixSignal_Leaves = Data.ixSignal_comp(ixLeaves);
             Data.Asignal_final = Data.Asignal_comp(ixKeep,ixKeep);
             
-            %% compare to standard configuration model
-            [Control.Emodel,diagnostics,Vmodel] = RndPoissonConfigModel(Data.A,pars.N,pars.C);
-            Control.P = expectedA(Data.A);
-            
-            B = Data.A - Control.P;
-            
-            % compute groups based on just positive eigenvalues
-            egs = eig(B);  % eigenspectra of data modularity matrix
-            egs = sort(egs,'descend'); % sort eigenvalues into descending order
-            Control.PosDn = sum(egs > pars.eg_min);
-            
-            % compute groups based on estimated bounds
-            [Control.Dspace,~,Control.Dn,Control.EigEst] = LowDSpace(B,Control.Emodel,pars.I); % to just obtain low-dimensional projection; Data.Dn = number of retained eigenvectors
-            
+%             %% compare to standard configuration model
+%             [Control.Emodel,diagnostics,Vmodel] = RndPoissonConfigModel(Data.A,pars.N,pars.C);
+%             Control.P = expectedA(Data.A);
+%             
+%             B = Data.A - Control.P;
+%             
+%             % compute groups based on just positive eigenvalues
+%             egs = eig(B);  % eigenspectra of data modularity matrix
+%             egs = sort(egs,'descend'); % sort eigenvalues into descending order
+%             Control.PosDn = sum(egs > pars.eg_min);
+%             
+%             % compute groups based on estimated bounds
+%             [Control.Dspace,~,Control.Dn,Control.EigEst] = LowDSpace(B,Control.Emodel,pars.I); % to just obtain low-dimensional projection; Data.Dn = number of retained eigenvectors
+%             
             %% save
-            save(['Results_batch1/Rejected_' fname],'Rejection','Data','Control','pars','optionsModel','optionsReject')
+%             save(['Results_reject2/Rejected_',fname],'Rejection','Data','pars','optionsModel','optionsReject')
+            par_cluster_save2(['Results_reject_preround/Rejected_',fname,'.mat'],Rejection,Data,pars,optionsModel,optionsReject)
+%             save(['Results_batch1/Rejected_',fname],'Rejection','Data','Control','pars','optionsModel','optionsReject')
         end
     end
 end
 
+%% Commenting everything after the parfor loop for now
+
+ 
+
 %% Summarise rejection results into a table
-fnames = dir('Results_batch1/');
+results_folder = 'Results_reject_preround/';
+fnames = dir(results_folder); %dir('Results_batch1/');
 
 nF = numel(fnames);
 
@@ -143,24 +163,26 @@ for iF = 1:nF
         netCtr = netCtr + 1;
         result(netCtr).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
         Data = {};
-        load(['Results_batch1/' fnames(iF).name]);
+        load([results_folder, fnames(iF).name]);
         result(netCtr).Network_Size = numel(Data.ixRetain);
         result(netCtr).Signal_Size_WCM = numel(Data.ixSignal_Final);
         result(netCtr).WCM_Dn = Data.PosDn;
         result(netCtr).WCM_RejectionDn = Data.Dn;
-        result(netCtr).Config_Dn = Control.PosDn;
-        result(netCtr).Config_RejectionDn = Control.Dn;
+%         result(netCtr).Config_Dn = Control.PosDn;
+%         result(netCtr).Config_RejectionDn = Control.Dn;
         result(netCtr).Signal_Components = numel(Data.SignalComp_sizes);
     end
 end
 
 Network_Rejection_Table = struct2table(result);
-save('Results_batch1/Network_Rejection_Table2','Network_Rejection_Table');
+save([results_folder,'Network_Rejection_Table_preround'],'Network_Rejection_Table');
 
 %% check which datasets have not been clustered yet
 clear all
-files = dir('Results_batch1/Rejected_*');
-c= [dir('Results_batch1/Clustered*');dir('Results_batch2/Clustered*');dir('Results_batch3/Clustered*')];
+% files = dir('Results_batch1/Rejected_*');
+files = dir('Results_reject_preround/Rejected_an197522*');
+% c= [dir('Results_batch1/Clustered*');dir('Results_batch2/Clustered*');dir('Results_batch3/Clustered*')];
+c = dir('Results_reject_preround/Clustered_an197522*');
 clusYN = ones(numel(files),1);
 for i = 1:numel(c)
     for j = 1:numel(files)
@@ -183,14 +205,16 @@ fontsize = 6;
 clusterpars.nreps = 100;
 clusterpars.nLouvain = 5;
 
-files = dir('Results_batch1/Rejected_*');
+files = dir('Results_reject_preround/Rejected_an197522*');
 % files = dir('Results/Rejected_*');
 
-parfor i = 1:numel(clus_todo) %numel(files) %383:566 ; % 743
+parfor i = 1:numel(clus_todo) %numel(files) %383:566 ; % 743 % 
     fname = files(clus_todo(i)).name(10:end-4)
+%     fname = files(i).name(10:end-4)
     
     % load data
-    temp_data = load(['Results_batch1/Rejected_', fname,'.mat']);
+%     temp_data = load(['Results_batch1/Rejected_', fname,'.mat']);
+    temp_data = load(['Results_reject_preround/Rejected_', fname,'.mat']);
     Data = temp_data.Data;
     
 %     load(['Results/Rejected_', fname,'.mat'])
@@ -230,9 +254,12 @@ parfor i = 1:numel(clus_todo) %numel(files) %383:566 ; % 743
     [LouvCluster,LouvQ,allCn,allIters] = LouvainCommunityUDnondeterm(Data.A,clusterpars.nLouvain,1);  % run 5 times; return 1st level of hierarchy only
     Full.LouvCluster = LouvCluster; Full.LouvQ = LouvQ;
     %% Save
-    par_cluster_save(['Results_batch4/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
+    par_cluster_save(['Results_reject_preround/Clustered_',fname,'.mat'],Full,Connected,clusterpars)
 %     save(['Results_batch1/Clustered_' fname],'Full','Connected','clusterpars')
 end
+
+%
+% while 0
 
 %% Cluster using output of Control noise rejection
 clear all
@@ -371,7 +398,7 @@ for i = 1:numel(animals)
 end
 
 %% Summarise stats and rejection results into table (but not eigs - just D to 90% variance) 
-fnames = dir('Results_batch1/Rejected_*');
+fnames = dir('Results_reject_preround/Rejected_*'); %('Results_reject_ceil/Rejected_*'); %('Results_batch1/Rejected_*');
 stat_fnames = dir('Results_batch1/StatsTable_*');
 nF = numel(fnames);
 nS = numel(stat_fnames);
@@ -395,7 +422,8 @@ for iF = 1:nF
         display(['stat file ',num2str(iF),' not found']);
     else
         Data = {};
-        load(['Results_batch1/',fnames(iF).name])
+%         load(['Results_batch1/',fnames(iF).name])
+        load(['Results_reject_preround/',fnames(iF).name])
         
         result(iF).NetworkName = fnames(iF).name(10:end-4); % strip out 'Rejected' and .mat
         
@@ -403,8 +431,8 @@ for iF = 1:nF
         result(iF).Signal_Size_WCM = numel(Data.ixSignal_Final);
         result(iF).WCM_Dn = Data.PosDn;
         result(iF).WCM_RejectionDn = Data.Dn;
-        result(iF).Config_Dn = Control.PosDn;
-        result(iF).Config_RejectionDn = Control.Dn;
+%         result(iF).Config_Dn = Control.PosDn;
+%         result(iF).Config_RejectionDn = Control.Dn;
         result(iF).Signal_Components = numel(Data.SignalComp_sizes);
         
         % stats stuff
@@ -429,7 +457,8 @@ for iF = 1:nF
 end
 
 Network_Rejection_Table = struct2table(result);
-save('Results_batch1/Network_Rejection_Table_wStats','Network_Rejection_Table');
+% save('Results_batch1/Network_Rejection_Table_wStats_ceil','Network_Rejection_Table');
+save('Results_reject_ceil/Network_Rejection_Table_wStats_preround','Network_Rejection_Table');
 
 
 %% NRstats FYI
@@ -899,3 +928,4 @@ subplot(2,2,4);
 imagesc(test_two.linkFull.ExpA); colorbar; title('LinkFull')
 suptitle('Feb 21 ExpA')
 
+% end
