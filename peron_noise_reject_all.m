@@ -458,7 +458,7 @@ end
 
 Network_Rejection_Table = struct2table(result);
 % save('Results_batch1/Network_Rejection_Table_wStats_ceil','Network_Rejection_Table');
-save('Results_reject_ceil/Network_Rejection_Table_wStats_preround','Network_Rejection_Table');
+save('Results_reject_preround/Network_Rejection_Table_wStats_preround','Network_Rejection_Table');
 
 
 %% NRstats FYI
