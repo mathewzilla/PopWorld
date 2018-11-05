@@ -528,6 +528,7 @@ end
 %% Load pdb.mat (planes database, in Peron_crcns) 
 % and match Network_Rejection_Table entries with plane IDs
 % NB - THIS MUST BE RECOMPUTED WITH NEWER EVENT DATA STRUCTURES
+load('Results_reject_preround/Network_Rejection_Table_wStats_preround.mat')
 load('/Users/mathew/work/Peron_crcns/pdb.mat')
 N = height(Network_Rejection_Table);
 for i = 1:N
@@ -591,7 +592,7 @@ for i = 1:8
 end
 
 
-
+save('Results_reject_preround/Network_Rejection_Table_wStats_preround2','Network_Rejection_Table');
 %% Single dataset testing of different rejection methods
 % (as the original version didn't work)
 clear all
