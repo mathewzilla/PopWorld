@@ -293,7 +293,6 @@ for i = 2:49
     D_edges(i) = mi;
 end
 
-
 %% Load typical example data + clustering output
 
 
