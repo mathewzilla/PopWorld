@@ -144,21 +144,21 @@ A_int = round(A*conversion);
 % % Convert links
 % A_int(ixLinks) = round(A_z(ixLinks)*conversion);
 
-% NEW VERSION: FIND ZERO ELEMENTS OF A_int THAT WERE NON-ZERO IN A
-ixLinks = find(A>0);
-tiny_links = find(A_int(ixLinks)==0);
-L_z = ixLinks(tiny_links);
-% Make new thresholded A
-A_z = A;
-A_z(L_z) = 0;
-
-varargout{5} = A_z;
-varargout{6} = L_z;
+% % NEW VERSION: FIND ZERO ELEMENTS OF A_int THAT WERE NON-ZERO IN A
+% ixLinks = find(A>0);
+% tiny_links = find(A_int(ixLinks)==0);
+% L_z = ixLinks(tiny_links);
+% % Make new thresholded A
+% A_z = A;
+% A_z(L_z) = 0;
+% 
+% varargout{5} = A_z;
+% varargout{6} = L_z;
 
 % Re-assigne A to thresholded version and recompute strength and degree distribution 
-A = A_z;
-sA = sum(A);  % original strength distribution
-kA = sum(A>0);  % original degree distribution
+% A = A_z;
+% sA = sum(A);  % original strength distribution
+% kA = sum(A>0);  % original degree distribution
 
 % % Sanity check plotting of dropped links
 % [ix(:,1),ix(:,2)] = ind2sub(size(A),ixLinks);

@@ -46,8 +46,8 @@ Network_Clustering_Table = struct2table(result);
 save('Clustering_Results_preround/Network_Clustering_Table','Network_Clustering_Table');
 
 %% Load Network_Clustering_Table and Rejection table
-load('Results_reject_preround/Network_Rejection_Table_wStats_preround2.mat')
-load('Results_reject_preround/Network_Clustering_Table.mat')
+load('Results_reject_preround/Network_Rejection_Table_wStats_preround3.mat')
+load('Clustering_Results_preround/Network_Clustering_Table.mat')
 
 %% Combine Clustering and Rejection results into a single table
 clear result
@@ -161,4 +161,3 @@ axis square
 xlabel(labels{1});
 ylabel(labels{2});
 end
-

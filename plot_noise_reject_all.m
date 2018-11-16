@@ -121,20 +121,48 @@ h(2) = plot_rejection_pairs(var3,var4,labels,colour_ID,edgecolour,dotcolour)
 % legend('Mouse 1','Mouse 2','Mouse 3','Mouse 4','Mouse 5','Mouse 6','Mouse 7','Mouse 8','location','southeast')
 
 %% Plot eig90 vs D_retained for all animals, then each individually
+NL_sess = find(~Network_Rejection_Table.Learning);
+% Also strip out very long sessions
+short_sess = find(Network_Rejection_Table.T<=5000);
+keepers = NL_sess(ismember(NL_sess,short_sess));
+
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+var4 = Network_Rejection_Table.eig90;
+
+% Normalise vs zscore
+var2 = var2./max(var2(keepers));
+var4 = var4./max(var4(keepers));
+
+% var2 = local_z(var2,keepers);
+% var4 = local_z(var4,keepers);
+
+
+
+
+% figure(1); clf;
+subplot(1,2,2)
+hold all
+labels = {'Spectral rejection dims (%)';'Eig_{90} dimensions (%)'};
+h(2) = plot_rejection_pairs(var2(keepers)*100,var4(keepers)*100,labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
+plot([0,100],[0,100],'linewidth',2,'color',[.7,.7,.7]); 
+grid on
+%% title('Proportion')
 
 figure(101); clf;
-subplot(3,3,1);
-labels = {'D_{rejection}';'Eig_{90}'};
-h(2) = plot_rejection_pairs(var2,var4,labels,colour_ID,edgecolour,dotcolour)
+ax(1) = subplot(3,3,1);
 
+h(2) = plot_rejection_pairs(var2(keepers),var4(keepers),labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
+% grid on
 animals = Network_Rejection_Table.Animal;
 
-
 for i = 1:numel(unique(colour_ID))
-    subplot(3,3,i+1);
-    this_A = find(animals == i);
+    ax(i+1) = subplot(3,3,i+1);
+    these_As = find(animals(keepers) == i);
+    this_A = keepers(these_As);
     h(2) = plot_rejection_pairs(var2(this_A),var4(this_A),labels,colour_ID(this_A),edgecolour(this_A,:),dotcolour(this_A,:))
+%     grid on
 end
+suptitle ('Proportion')
 
 %% Same but not plotting learning sessions
 NL_sess = find(~Network_Rejection_Table.Learning);
@@ -212,15 +240,193 @@ xlim([0,10000])
 plot([0;1e4],yExt1(end).*ones(2,1),'r--')
 plot([0;1e4],yExt3(end).*ones(2,1),'g--')
 
-%% Rise to max (Mark's code)
+%% Non-learning data. Shorter sessions only
+NL_sess = find(~Network_Rejection_Table.Learning);
+% Also strip out very long sessions
+short_sess = find(Network_Rejection_Table.T<=5000);
 
-AICSS.m
-BICSS.m
-fitcurves.m
+keepers = NL_sess(ismember(NL_sess,short_sess));
 
-%% Bootstrap error bars
+var1 = Network_Rejection_Table.Signal_Size_WCM;
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+var3 = Network_Rejection_Table.Network_Size;
+var4 = Network_Rejection_Table.eig90;
+
+figure(2); clf;
+labels = {'Retained N';'D_{Rejection}'};
+h(1) = plot_rejection_pairs(var1(keepers),var2(keepers),labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
 
 
+figure(103); clf;
+ax(1) = subplot(3,3,1);
+h(1) = plot_rejection_pairs(var1(keepers),var2(keepers),labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
+
+animals = Network_Rejection_Table.Animal;
+
+
+for i = 1:numel(unique(colour_ID))
+    ax(i+1) = subplot(3,3,i+1);
+    these_As = find(animals(keepers) == i);
+    this_A = keepers(these_As);
+    h(i+1) = plot_rejection_pairs(var1(this_A),var2(this_A),labels,colour_ID(this_A),edgecolour(this_A,:),dotcolour(this_A,:))
+end
+linkaxes(ax)
+
+%% Fitting linear and rise to max models (Mark's code). 
+clear AICs BICs
+var1 = Network_Rejection_Table.Signal_Size_WCM;
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+% var2 = Network_Rejection_Table.eig90;
+xdata = var1(keepers);
+ydata = var2(keepers);
+
+SS = zeros(2,1);
+coeffs = cell(2,1);
+residuals = cell(2,1);
+IV = rand(2,1);
+
+% linear fit
+LB = -1e6;
+UB = 1e6;
+options = optimoptions('lsqcurvefit','Algorithm','levenberg-marquardt');
+options.MaxFunctionEvaluations = 1000;
+    
+linfun = inline('x(1) + x(2) .* xdata','x','xdata');
+[coeffs{1},SS(1),residuals{1}] = lsqcurvefit(linfun,[1;0], xdata, ydata,LB,UB,options);   
+
+% exponential rise-to-max (2par) a*(1-exp(-b*x))
+expmaxAfun = inline('x(1) .* (1-exp(-x(2).*xdata))','x','xdata');
+[coeffs{2},SS(2),residuals{2}] = lsqcurvefit(expmaxAfun,[100;0], xdata, ydata,LB,UB,options);              
+
+% Model selection stuff
+for j = 1:2
+    AICs(j) = AICSS(SS(j),length(ydata),length(coeffs{j}));
+    BICs(j) = BICSS(SS(j),length(ydata),length(coeffs{j}));
+end
+
+%% Linear through the origin
+B = xdata\ydata;
+yEst1 = xdata*B;
+% plot(xdata,yEst1,'g','linewidth',2)
+
+%% Plotting
+figure(104); clf;
+subplot(1,2,1);
+% labels = {'Retained N';'D_{Rejection}'};
+labels = {'N';'Spectral rejection dimensions'};
+% labels = {'N';'Eig_{90} dimensions'};
+h(1) = plot_rejection_pairs(xdata,ydata,labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:));
+
+xrange = linspace(0,6e3,100);
+
+linpred = linfun(coeffs{1},xrange);
+yEst2 = xrange*B;
+
+r2maxpred = expmaxAfun(coeffs{2},xrange);
+
+% plot(xrange,linpred,'r','linewidth',2)
+plot(xrange,yEst2,'r','linewidth',2)
+plot(xrange,r2maxpred,'b','linewidth',2)
+
+% Plot extrapolated dims on top
+% plot([0;6e3],linpred(end).*ones(2,1),'r--','linewidth',2)
+% plot([0;6e3],r2maxpred(end).*ones(2,1),'b--','linewidth',2)
+
+% plot([0;xrange(31)],linpred(31).*ones(2,1),'r:','linewidth',2)
+plot([0;xrange(31)],yEst2(31).*ones(2,1),'r:','linewidth',2)
+plot([0;xrange(31)],r2maxpred(31).*ones(2,1),'b:','linewidth',2)
+
+% plot([xrange(31);xrange(31)],[0,linpred(31)],'r:','linewidth',2)
+plot([xrange(31);xrange(31)],[0,yEst2(31)],'r:','linewidth',2)
+plot([xrange(31);xrange(31)],[0,r2maxpred(31)],'b:','linewidth',2)
+
+xlim([0,2050])
+%% Refit to individual mice
+var1 = Network_Rejection_Table.Signal_Size_WCM;
+var2 = Network_Rejection_Table.WCM_RejectionDn;
+xdata = var1(keepers);
+ydata = var2(keepers);
+
+clear ax h 
+xrange = linspace(0,6e3,100);
+figure(105); clf;
+ax(i) = subplot(3,3,1);
+labels = {'N';'D'};
+plot_rejection_pairs(xdata,ydata,labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
+% plot(xrange,linpred,'r','linewidth',2)
+plot(xrange,yEst2,'r','linewidth',2)
+plot(xrange,r2maxpred,'b','linewidth',2)
+% title(['D1.8K:{\color{red}',num2str(round(linpred(31))),'}|{\color{blue}',num2str(round(r2maxpred(31))), '}. D6K:{\color{red}',num2str(round(linpred(end))),'}|{\color{blue}',num2str(round(r2maxpred(end))),'}'])
+
+clear lindims_L23 lindims_B expdims_L23 expdims_B
+lindims_L23(1,1) = round(yEst2(31)); %round(linpred(31));
+expdims_L23(1,1) = round(r2maxpred(31));
+lindims_B(1,1) = round(yEst2(end)); %round(linpred(end));
+expdims_B(1,1) = round(r2maxpred(end));
+%%
+clear AICs BICs coeffs SS residuals
+% IV = [0.5,0];  % [0.6557;0.0357]
+for i = 1:numel(unique(colour_ID))
+    
+    these_As = find(animals(keepers) == i);
+    this_A = keepers(these_As);
+    xdata = var1(this_A);
+    ydata = var2(this_A);
+    
+    ax(i+1) = subplot(3,3,i+1);
+    h(i+1) = plot_rejection_pairs(xdata,ydata,labels,colour_ID(this_A),edgecolour(this_A,:),dotcolour(this_A,:))
+    
+    [coeffs{i,1},SS(i,1),residuals{i,1}] = lsqcurvefit(linfun,[1;0], xdata, ydata,LB,UB,options); 
+    [coeffs{i,2},SS(i,2),residuals{i,2}] = lsqcurvefit(expmaxAfun,[100;0], xdata, ydata,LB,UB,options);
+    
+    linpred = linfun(coeffs{i,1},xrange);
+    B = xdata\ydata;
+    yEst2 = xrange*B;
+    
+    r2maxpred = expmaxAfun(coeffs{i,2},xrange);
+    
+
+%     plot(xrange,linpred,'r','linewidth',2)
+    plot(xrange,yEst2,'r','linewidth',2)
+    plot(xrange,r2maxpred,'b','linewidth',2)
+%     title(['D1.8K:{\color{red}',num2str(round(linpred(31))),'}|{\color{blue}',num2str(round(r2maxpred(31))), '}. D6K:{\color{red}',num2str(round(linpred(end))),'}|{\color{blue}',num2str(round(r2maxpred(end))),'}'])
+
+    lindims_L23(1,i+1) = round(yEst2(31)); %round(linpred(31));
+    expdims_L23(1,i+1) = round(r2maxpred(31));
+    lindims_B(1,i+1) = round(yEst2(end)); %round(linpred(end));
+    expdims_B(1,i+1) = round(r2maxpred(end));
+    
+    for j = 1:2
+        AICs(i,j) = AICSS(SS(i,j),length(ydata),length(coeffs{i,j}));
+        BICs(i,j) = BICSS(SS(i,j),length(ydata),length(coeffs{i,j}));
+    end
+end
+
+linkaxes(ax)
+
+% Bootstrap error bars TO DO
+
+%% plot extrapolation dim stats
+figure(106); clf
+subplot(1,2,1);
+plot([ones(8,1),2*ones(8,1)]',[lindims_L23(2:9);expdims_L23(2:9)],'linewidth',2,'color',[.7,.7,.7])
+hold all
+plot(ones(8,1),lindims_L23(2:9),'r.','markersize',20)
+plot(2*ones(8,1),expdims_L23(2:9),'b.','markersize',20)
+plot([1,2],[lindims_L23(1);expdims_L23(1)],'linewidth',2,'color',[.2,.2,.2])
+plot([1,2],[lindims_L23(1);expdims_L23(1)],'k.','markersize',20)
+xlim([0.5,2.5]); axis square; ylabel('Dimensions')
+set(gca,'Xtick', 1:2,'Xticklabel',{'Linear';'Exponential'}); title('L2/3')
+
+subplot(1,2,2);
+plot([ones(8,1),2*ones(8,1)]',[lindims_B(2:9);expdims_B(2:9)],'linewidth',2,'color',[.7,.7,.7])
+hold all
+plot(ones(8,1),lindims_B(2:9),'r.','markersize',20)
+plot(2*ones(8,1),expdims_B(2:9),'b.','markersize',20)
+plot([1,2],[lindims_B(1);expdims_B(1)],'linewidth',2,'color',[.2,.2,.2])
+plot([1,2],[lindims_B(1);expdims_B(1)],'k.','markersize',20)
+xlim([0.5,2.5]); axis square; ylabel('Dimensions')
+set(gca,'Xtick', 1:2,'Xticklabel',{'Linear';'Exponential'}); title('Barrel column')
 %% Separate figure for each mouse. Plot slope for each on top
 % var2 = Network_Rejection_Table.WCM_RejectionDn;
 var2 = Network_Rejection_Table.eig90;
@@ -304,7 +510,38 @@ for A = 1:8
 %     pause
 end
 
-
+%% model comparison plot
+Dsets = {SS,AICs,BICs};
+meth_names = {'Sum of squares';'AIC';'BIC'};
+clf
+for i = 1:3
+    subplot(2,3,i);
+    plot(Dsets{i}(:,1),'r','linewidth',2)
+    hold all
+    plot(Dsets{i}(:,2),'b','linewidth',2)
+%     legend('linear','rise to max')
+    xlabel('Mice')
+    ylabel(meth_names{i})
+    title(meth_names{i})
+    axis square
+    
+    subplot(2,3,i+3);
+    plot([ones(8,1),2*ones(8,1)]',[Dsets{i}(:,1),Dsets{i}(:,2)]','k','linewidth',2)
+    hold all
+    plot(ones(8,1),Dsets{i}(:,1),'r.','markersize',20)
+    plot(2*ones(8,1),Dsets{i}(:,2),'b.','markersize',20)
+    xlim([0,3])
+    set(gca,'Xtick',[1,2],'Xticklabel',{'Linear';'Rise2Max'})
+%     xtickangle(30)
+%     legend('linear','rise to max')
+%     xlabel('Mice')
+    ylabel(meth_names{i})
+    title(meth_names{i})
+    axis square
+    
+end
+suptitle('Red: Linear, Blue: Rise to max')
+% legend('linear','rise to max','location','bestoutside')
 %% Organised data so you get D vs N for recordings within a session, per mouse
 % var2 = Network_Rejection_Table.WCM_RejectionDn;
 var2 = Network_Rejection_Table.eig90;
@@ -1324,4 +1561,14 @@ ticklabs = get(gca,'xticklabels')
 axis square
 xlabel(labels{1});
 ylabel(labels{2});
+end
+
+%% zscore function that normalises the whole dataset to values of a subset
+function z = local_z(x,keepers)
+mu = mean(x(keepers));
+sigma = std(x(keepers));
+sigma0 = sigma;
+sigma0(sigma0==0) = 1;
+z = bsxfun(@minus,x, mu);
+z = bsxfun(@rdivide, z, sigma0);
 end
