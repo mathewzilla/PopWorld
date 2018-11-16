@@ -52,20 +52,20 @@ parfor i = 1:numel(animals)
         ev_files = ((N+1)/2)+1 : N;
         
         %         for k = 2:numel(s.timeSeriesArrayHash.value)
-        for k = 1:numel(ca_files) %(ev_files)
+        for k = 1:numel(ev_files) %(ca_files) %
             
             %             fname = [files(j).name(1:end-9),'_sv_',num2str(k-1)]
             % Special case for animal 4
             if i == 4
-                fname = [files(j).name(1:end-4),'_data_s_sv_',num2str(k)]
-%                 fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
+%                 fname = [files(j).name(1:end-4),'_data_s_sv_',num2str(k)]
+                fname = [files(j).name(1:end-4),'_events_sv_',num2str(k)]
             else
-                fname = [files(j).name(1:end-9),'_data_s_sv_',num2str(k)]
-%                 fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
+%                 fname = [files(j).name(1:end-9),'_data_s_sv_',num2str(k)]
+                fname = [files(j).name(1:end-9),'_events_sv_',num2str(k)]
             end
             
             %             data = s.timeSeriesArrayHash.value{k}.valueMatrix;
-            data = s.timeSeriesArrayHash.value{ca_files(k)}.valueMatrix;
+            data = s.timeSeriesArrayHash.value{ev_files(k)}.valueMatrix; % ca_files
             % clean up
             data(find(isnan(data))) = 0;
             
@@ -140,7 +140,7 @@ parfor i = 1:numel(animals)
 %             
             %% save
 %             save(['Results_reject2/Rejected_',fname],'Rejection','Data','pars','optionsModel','optionsReject')
-            par_cluster_save2(['Results_reject_preround/Rejected_',fname,'.mat'],Rejection,Data,pars,optionsModel,optionsReject)
+            par_cluster_save2(['Results_reject_events/Rejected_',fname,'.mat'],Rejection,Data,pars,optionsModel,optionsReject)
 %             save(['Results_batch1/Rejected_',fname],'Rejection','Data','Control','pars','optionsModel','optionsReject')
         end
     end
@@ -148,7 +148,7 @@ end
 
 
 %% Summarise rejection results into a table
-results_folder = 'Results_reject_preround/';
+results_folder = 'Results_reject_events/';
 fnames = dir(results_folder); %dir('Results_batch1/');
 
 nF = numel(fnames);
@@ -172,15 +172,15 @@ for iF = 1:nF
 end
 
 Network_Rejection_Table = struct2table(result);
-save([results_folder,'Network_Rejection_Table_preround'],'Network_Rejection_Table');
+save([results_folder,'Network_Rejection_Table_events'],'Network_Rejection_Table');
 
 %% check which datasets have not been clustered yet
 clear all
 % files = dir('Results_batch1/Rejected_*');
 % animals = {'an171923';'an194181';'an194672';'an197522';'an198503';'an229716';'an229717';'an229719'};
-files = dir('Results_reject_preround/Rejected_an194181*'); %an198503*'); %an197522*');
+files = dir('Results_reject_preround/Rejected_an194672*'); %an194181*'); %an198503*'); %an197522*');
 % c= [dir('Results_batch1/Clustered*');dir('Results_batch2/Clustered*');dir('Results_batch3/Clustered*')];
-c = dir('Results_reject_preround/Clustered_an194181*'); %an198503*'); %an197522*');
+c = dir('Results_reject_preround/Clustered_an194672*'); %an194181*'); %an198503*'); %an197522*');
 clusYN = ones(numel(files),1);
 for i = 1:numel(c)
     for j = 1:numel(files)
@@ -203,7 +203,7 @@ fontsize = 6;
 clusterpars.nreps = 100;
 clusterpars.nLouvain = 5;
 
-files = dir('Results_reject_preround/Rejected_an194181*'); %an198503*'); %an197522*');
+files = dir('Results_reject_preround/Rejected_an194672*'); %an194181*'); %an198503*'); %an197522*');
 % files = dir('Results/Rejected_*');
 
 parfor i = 1:numel(clus_todo) %numel(files) %383:566 ; % 743 % 
