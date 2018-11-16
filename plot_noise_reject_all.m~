@@ -140,7 +140,7 @@ var4 = var4./max(var4(keepers));
 
 
 % figure(1); clf;
-subplot(1,2,2)
+subplot
 hold all
 labels = {'Spectral rejection dims (%)';'Eig_{90} dimensions (%)'};
 h(2) = plot_rejection_pairs(var2(keepers)*100,var4(keepers)*100,labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
@@ -276,7 +276,7 @@ linkaxes(ax)
 clear AICs BICs
 var1 = Network_Rejection_Table.Signal_Size_WCM;
 var2 = Network_Rejection_Table.WCM_RejectionDn;
-% var2 = Network_Rejection_Table.eig90;
+var2 = Network_Rejection_Table.eig90;
 xdata = var1(keepers);
 ydata = var2(keepers);
 
@@ -313,8 +313,8 @@ yEst1 = xdata*B;
 figure(104); clf;
 subplot(1,2,1);
 % labels = {'Retained N';'D_{Rejection}'};
-labels = {'N';'Spectral rejection dimensions'};
-% labels = {'N';'Eig_{90} dimensions'};
+% labels = {'N';'Spectral rejection dimensions'};
+labels = {'N';'Eig_{90} dimensions'};
 h(1) = plot_rejection_pairs(xdata,ydata,labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:));
 
 xrange = linspace(0,6e3,100);
