@@ -339,18 +339,26 @@ load('Results_reject_preround/Network_Rejection_Table_wEvents.mat');
 % fname = 'an229716_2013_12_06_data_s_sv_6';
 % fname = 'an229717_2013_12_01_data_s_sv_3';
 % fname = 'an229719_2013_12_01_data_s_sv_6';
-% for i = 41:47; figure(i); clf; end
-POS_mice = [1,2,4,6,8]; NEG_mice = [3,5,7];
-% for A = 1:8
-A = 4;
+for i = 41:47; figure(i); clf; end
+% POS_mice = [1,2,4,6,8]; NEG_mice = [3,5,7]; % Ca
+POS_mice = [4,5,6,8]; NEG_mice = [1,2,3,7]; % Ca
+
+for A = 1:8
+% A = 4;
     fname = FNAMES{A};
     
     % Clustering results if available
     % load(['/Users/mathew/work/PopWorld/Clustering_Results_preround/Clustered_',fname,'.mat']); % _data_s_sv_1
     
-    load(['/Volumes/05/Peron_2015/Peron_ssc_events/an197522/',fname(1:19),'.mat'])
-%     load(['/Volumes/05/Peron_2015/Peron_ssc-2/ssc-2/',fname(1:8),'/',fname(1:19),'_data_struct.mat'])
-%     dat = s; clear s; 
+    %     load(['/Volumes/05/Peron_2015/Peron_ssc_events/an197522/',fname(1:19),'.mat'])
+    %     load(['/Volumes/05/Peron_2015/Peron_ssc-2/ssc-2/',fname(1:8),'/',fname(1:19),'_data_struct.mat'])
+    if A~=4
+        load(['/media/mathew/Data_1/Peron_ssc-2/with_events/',fname(1:8),'/',fname(1:19),'_sess.mat']);
+        dat = s; clear s;
+    else
+        load(['/media/mathew/Data_1/Peron_ssc-2/with_events/',fname(1:8),'/',fname(1:19),'.mat']);
+    end
+    %     dat = s; clear s;
     sv = str2num(fname(end));
     
     N = numel(dat.timeSeriesArrayHash.value);
@@ -534,91 +542,91 @@ A = 4;
     
     % loop to plot event lines on top (pole up,down,reward port)
     
-    for f = [20,21,22]
-        figure(f);clf;
-        if f ~= 20
-            for j = 1:4
-                subplot(2,2,j)
-                event_subset = [1,2,7];
-                for i = 1:numel(event_subset)
-                    plot(med_events(event_subset(i))*ones(2,1),[0,1.5],'linewidth',2,'color','k'); %[0,0.1]
-                    hold all
-                end
-            end
-        else
-            event_subset = [1,2,7];
-            for i = 1:numel(event_subset)
-                plot(med_events(event_subset(i))*ones(2,1),[0,1.5],'linewidth',2,'color','k');
-                hold all
-            end
-        end
-        
-    end
+%     for f = [20,21,22]
+%         figure(f);clf;
+%         if f ~= 20
+%             for j = 1:4
+%                 subplot(2,2,j)
+%                 event_subset = [1,2,7];
+%                 for i = 1:numel(event_subset)
+%                     plot(med_events(event_subset(i))*ones(2,1),[0,1.5],'linewidth',2,'color','k'); %[0,0.1]
+%                     hold all
+%                 end
+%             end
+%         else
+%             event_subset = [1,2,7];
+%             for i = 1:numel(event_subset)
+%                 plot(med_events(event_subset(i))*ones(2,1),[0,1.5],'linewidth',2,'color','k');
+%                 hold all
+%             end
+%         end
+%         
+%     end
     
     %%
-    cmap3 = brewermap(10,'Paired');
-  
-    for i = 1:5
-        figure(20);
-        plot(ca_ts,psth_ca(i,:)','color',cmap3((2*i)-1,:),'linewidth',2)
-        plot(ca_ts,psth_ca(i+6,:)','color',cmap3(2*i,:),'linewidth',2)
-        title(['Population PSTH (',num2str(numel(trials)),' trials)'])
-        xlim([0,7000])
-        legend('Pole up','Pole down','Reward cue')
-        xlabel('Time (ms)')
-        ylabel('Cluster mean Ca2+')
-        % ylim([0,0.1])
-        % pause
-    end
-    print(['Figures/V1_LowDprojection/PSTH_all_prctile_',fname,'_Events'],'-dpdf','-bestfit')
+%     cmap3 = brewermap(10,'Paired');
+%   
+%     for i = 1:5
+%         figure(20);
+%         plot(ca_ts,psth_ca(i,:)','color',cmap3((2*i)-1,:),'linewidth',2)
+%         plot(ca_ts,psth_ca(i+6,:)','color',cmap3(2*i,:),'linewidth',2)
+%         title(['Population PSTH (',num2str(numel(trials)),' trials)'])
+%         xlim([0,7000])
+%         legend('Pole up','Pole down','Reward cue')
+%         xlabel('Time (ms)')
+%         ylabel('Cluster mean Ca2+')
+%         % ylim([0,0.1])
+%         % pause
+%     end
+%     print(['Figures/V1_LowDprojection/PSTH_all_prctile_',fname,'_Events'],'-dpdf','-bestfit')
     %%
     % Two 2x2 plots of the trial type/ performance data
-    for i = 1:5
-        figure(21);
-        ax(1) = subplot(2,2,1);
-        plot(ca_ts,psth_ca_L(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Left (',num2str(numel(L)),' trials)'])
-        plot(ca_ts,psth_ca_L(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        ax(2) = subplot(2,2,2);
-        plot(ca_ts,psth_ca_R(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Right (',num2str(numel(R)),' trials)'])
-        plot(ca_ts,psth_ca_R(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        ax(3) = subplot(2,2,3);
-        plot(ca_ts,psth_ca_C(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Correct (',num2str(numel(C)),' trials)'])
-        plot(ca_ts,psth_ca_C(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        xlabel('Time (ms)')
-        ylabel('Cluster mean Ca2+')
-        ax(4) = subplot(2,2,4);
-        plot(ca_ts,psth_ca_IC(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Incorrect (',num2str(numel(IC)),' trials)'])
-        plot(ca_ts,psth_ca_IC(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        linkaxes(ax)
-        xlim([0,7000])
-        % ylim([0,0.1])
-        
-        figure(22);
-        bx(1) = subplot(2,2,1);
-        plot(ca_ts,psth_ca_hit(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Correct Left (',num2str(numel(hit)),' trials)'])
-        plot(ca_ts,psth_ca_hit(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        bx(2) = subplot(2,2,2);
-        plot(ca_ts,psth_ca_CR(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Correct Right (',num2str(numel(CR)),' trials)'])
-        plot(ca_ts,psth_ca_CR(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        bx(3) = subplot(2,2,3);
-        plot(ca_ts,psth_ca_miss(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Incorrect Left (',num2str(numel(miss)),' trials)'])
-        plot(ca_ts,psth_ca_miss(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        xlabel('Time (ms)')
-        ylabel('Cluster mean Ca2+')
-        bx(4) = subplot(2,2,4);
-        plot(ca_ts,psth_ca_FA(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Incorrect Right (',num2str(numel(FA)),' trials)'])
-        plot(ca_ts,psth_ca_FA(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
-        linkaxes(bx)
-        xlim([0,7000])
-        % ylim([0,0.1])
-        % pause
-    end
-    
-    figure(21);
-    print(['Figures/V1_LowDprojection/PSTH_TrialType_prctile_',fname,'_Events'],'-dpdf','-bestfit')
-    
-    figure(22);
-    print(['Figures/V1_LowDprojection/PSTH_Outcome_prctile_',fname,'_Events'],'-dpdf','-bestfit')
+%     for i = 1:5
+%         figure(21);
+%         ax(1) = subplot(2,2,1);
+%         plot(ca_ts,psth_ca_L(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Left (',num2str(numel(L)),' trials)'])
+%         plot(ca_ts,psth_ca_L(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         ax(2) = subplot(2,2,2);
+%         plot(ca_ts,psth_ca_R(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Right (',num2str(numel(R)),' trials)'])
+%         plot(ca_ts,psth_ca_R(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         ax(3) = subplot(2,2,3);
+%         plot(ca_ts,psth_ca_C(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Correct (',num2str(numel(C)),' trials)'])
+%         plot(ca_ts,psth_ca_C(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         xlabel('Time (ms)')
+%         ylabel('Cluster mean Ca2+')
+%         ax(4) = subplot(2,2,4);
+%         plot(ca_ts,psth_ca_IC(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Incorrect (',num2str(numel(IC)),' trials)'])
+%         plot(ca_ts,psth_ca_IC(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         linkaxes(ax)
+%         xlim([0,7000])
+%         % ylim([0,0.1])
+%         
+%         figure(22);
+%         bx(1) = subplot(2,2,1);
+%         plot(ca_ts,psth_ca_hit(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Correct Left (',num2str(numel(hit)),' trials)'])
+%         plot(ca_ts,psth_ca_hit(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         bx(2) = subplot(2,2,2);
+%         plot(ca_ts,psth_ca_CR(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Correct Right (',num2str(numel(CR)),' trials)'])
+%         plot(ca_ts,psth_ca_CR(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         bx(3) = subplot(2,2,3);
+%         plot(ca_ts,psth_ca_miss(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Incorrect Left (',num2str(numel(miss)),' trials)'])
+%         plot(ca_ts,psth_ca_miss(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         xlabel('Time (ms)')
+%         ylabel('Cluster mean Ca2+')
+%         bx(4) = subplot(2,2,4);
+%         plot(ca_ts,psth_ca_FA(i,:)','color',cmap3((2*i)-1,:),'linewidth',2); title(['Incorrect Right (',num2str(numel(FA)),' trials)'])
+%         plot(ca_ts,psth_ca_FA(i+6,:)','color',cmap3(2*i,:),'linewidth',2);
+%         linkaxes(bx)
+%         xlim([0,7000])
+%         % ylim([0,0.1])
+%         % pause
+%     end
+%     
+%     figure(21);
+%     print(['Figures/V1_LowDprojection/PSTH_TrialType_prctile_',fname,'_Events'],'-dpdf','-bestfit')
+%     
+%     figure(22);
+%     print(['Figures/V1_LowDprojection/PSTH_Outcome_prctile_',fname,'_Events'],'-dpdf','-bestfit')
     
     %% One eigenvector per animal
 
@@ -714,26 +722,26 @@ A = 4;
     
     
     %% Create tuning curves of for Ang and K
-    for p = 1:5
+    for p = 1%:5
         NEG = -V(negx{p},p)' * data(Data.ixRetain(negx{p}),:);
         POS = V(posx{p},p)' * data(Data.ixRetain(posx{p}),:);
-        figure(7+p);clf
+%         figure(7+p);clf
         % Run either NEG or POS depending on mouse
         % POS_mice = [1,2,4,6,8]; NEG_mice = [3,5,7];
-        for j = 1:2
-            if j == 1
-                ca = POS;
-%                 figure(42);
-            elseif j == 2
-                ca = NEG;
-%                 figure(43);
-            end
-%             if any(ismember(POS_mice,A))
+%         for j = 1:2
+%             if j == 1
 %                 ca = POS;
-%             elseif any(ismember(NEG_mice,A))
+% %                 figure(42);
+%             elseif j == 2
 %                 ca = NEG;
+% %                 figure(43);
 %             end
-            %             figure(46);
+            if any(ismember(POS_mice,A))
+                ca = POS;
+            elseif any(ismember(NEG_mice,A))
+                ca = NEG;
+            end
+            figure(46);
             
             numbins = 15;
             bin_edges = round(linspace(1,numel(K_ds),numbins+1));
@@ -746,12 +754,12 @@ A = 4;
                 mean_kappa(i) = nanmean((K_ds(sort_K(bin_edges(i):bin_edges(i+1)))));
             end
             
-                        ax(2) = subplot(2,2,(j*2)-1);
-            %             subplot(8,2,(A*2)-1); cla;
-%             subplot(2,1,1); hold all;
-                        myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),[0,0,1,0])
-            %             myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
-%             plot(mean_kappa,mean_ca_K- mean_ca_K(8),'linewidth',2,'color',cmap4(A,:))
+%                         ax(2) = subplot(2,2,(j*2)-1);
+%                         subplot(8,2,(A*2)-1); cla;
+            subplot(2,1,1); hold all;
+%                         myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),[0,0,1,0])
+%                         myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
+            plot(mean_kappa,mean_ca_K- mean_ca_K(8),'linewidth',2,'color',cmap4(A,:))
             title([fname(1:8)])
             ylabel('Mean Normalized Ca (bin)');
             xlabel('Whisker curvature');
@@ -768,18 +776,18 @@ A = 4;
             pop_mean_ca_A(A,:) = mean_ca_A;
             pop_mean_amp(A,:) = mean_amp;
             N_amp(A) = numel(K_ds);
-                        ax(1) = subplot(2,2,j*2);
-            %             subplot(8,2,(A*2)); cla
-%             subplot(2,1,2); hold all
-                        myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),[1,0.1,0,0])
-            %             myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
-%             plot(mean_amp,mean_ca_A-mean_ca_A(1),'linewidth',2,'color',cmap4(A,:))
+%                         ax(1) = subplot(2,2,j*2);
+%                         subplot(8,2,(A*2)); cla
+            subplot(2,1,2); hold all
+%                         myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),[1,0.1,0,0])
+%                         myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
+            plot(mean_amp,mean_ca_A-mean_ca_A(1),'linewidth',2,'color',cmap4(A,:))
             ylabel('Mean Normalized Ca (bin)');
             xlabel('Whisker amplitude');
         end
-        suptitle(['V',num2str(p),'. ',fname(1:8)])
-        print(['Figures/V1_LowDprojection/Kappa_tuning_V',num2str(p),'_',fname,'_Events'],'-dpdf','-bestfit')
-    end
+%         suptitle(['V',num2str(p),'. ',fname(1:8)])
+%         print(['Figures/V1_LowDprojection/Kappa_tuning_V',num2str(p),'_',fname,'_Events'],'-dpdf','-bestfit')
+%     end
     
     %% Touch triggered average
     % First find touches on relevant trials
@@ -811,7 +819,7 @@ A = 4;
     
 %     figure(31); clf;
     figure(47);
-    for p = 1:5
+    for p = 1%:5
         NEG = -V(negx{p},p)' * data(Data.ixRetain(negx{p}),:);
         POS = V(posx{p},p)' * data(Data.ixRetain(posx{p}),:);
         
@@ -824,33 +832,34 @@ A = 4;
         POS_tta = nanmean(c_POS,1);
         NEG_tta = nanmean(c_NEG,1);
         
-        subplot(3,2,p);
+%         subplot(3,2,p);
 %         subplot(4,2,A); cla
-        myeb(1:22,mean(zscore(c_POS')'),std(zscore(c_POS')')/sqrt(length(c_POS)),[0,1,0,0])
-        myeb(1:22,mean(zscore(c_NEG')'),std(zscore(c_NEG')')/sqrt(length(c_NEG)),[0,0.1,1,0])
+%         myeb(1:22,mean(zscore(c_POS')'),std(zscore(c_POS')')/sqrt(length(c_POS)),[0,1,0,0])
+%         myeb(1:22,mean(zscore(c_NEG')'),std(zscore(c_NEG')')/sqrt(length(c_NEG)),[0,0.1,1,0])
 
-%         if any(ismember(POS_mice,A))
-% %             myeb(1:22,mean(zscore(c_POS')'),std(zscore(c_POS')')/sqrt(length(c_POS)),cmap4(A,:),cmap4(A,:))
-%             tth = mean(zscore(c_POS')');
-%             plot(1:22,tth-tth(1),'linewidth',2,'color',cmap4(A,:))
-%             pop_mean_tth(A,:) = tth-tth(1);
-%             N_tth(A) = numel(ftf);
-%         elseif any(ismember(NEG_mice,A))
-% %             myeb(1:22,mean(zscore(c_NEG')'),std(zscore(c_NEG')')/sqrt(length(c_NEG)),cmap4(A,:),cmap4(A,:))
-%             tth = mean(zscore(c_NEG')');
-%             plot(1:22,tth-tth(1),'linewidth',2,'color',cmap4(A,:))
-%             pop_mean_tth(A,:) = tth-tth(1);
-%             N_tth(A) = numel(ftf);
-%         end
+        if any(ismember(POS_mice,A))
+%             myeb(1:22,mean(zscore(c_POS')'),std(zscore(c_POS')')/sqrt(length(c_POS)),cmap4(A,:),cmap4(A,:))
+            tth = mean(zscore(c_POS')');
+            plot(1:22,tth-tth(1),'linewidth',2,'color',cmap4(A,:))
+            pop_mean_tth(A,:) = tth-tth(1);
+            N_tth(A) = numel(ftf);
+        elseif any(ismember(NEG_mice,A))
+%             myeb(1:22,mean(zscore(c_NEG')'),std(zscore(c_NEG')')/sqrt(length(c_NEG)),cmap4(A,:),cmap4(A,:))
+            tth = mean(zscore(c_NEG')');
+            plot(1:22,tth-tth(1),'linewidth',2,'color',cmap4(A,:))
+            pop_mean_tth(A,:) = tth-tth(1);
+            N_tth(A) = numel(ftf);
+        end
         hold all
-        plot([8,8],[-1,1],'k--')
+%         plot([8,8],[-1,1],'k--')
         
         title(['Touch triggered average. V',num2str(p)])
 %         title([fname(1:8)])
         %     pause
     end
-    print(['Figures/V1_LowDprojection/Touch_tuning_',fname,'_Events'],'-dpdf','-bestfit')
-% end
+%     print(['Figures/V1_LowDprojection/Touch_tuning_',fname,'_Events'],'-dpdf','-bestfit')
+end
+
 %%
 figure(48); clf;
 leg_str = []; for i = 1:8; plot([1,1],[1,2],'linewidth',2,'color',cmap4(i,:)); hold all; leg_str = [leg_str;'Mouse ',num2str(i)];end

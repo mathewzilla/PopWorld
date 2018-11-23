@@ -331,26 +331,34 @@ load('Results_reject_preround/Network_Rejection_Table_wEvents.mat');
 % load([Results_path,'/Clustered_',fname],'Full','Connected')
 
 
-% fname = 'an171923_2012_06_04_data_s_sv_4';
-% fname = 'an194181_2013_01_31_data_s_sv_2';
-% fname = 'an194672_2013_02_24_data_s_sv_1';
-% fname = 'an197522_2013_03_08_data_s_sv_2';
-% fname = 'an198503_2013_03_15_data_s_sv_5';
-% fname = 'an229716_2013_12_06_data_s_sv_6';
-% fname = 'an229717_2013_12_01_data_s_sv_3';
-% fname = 'an229719_2013_12_01_data_s_sv_6';
-% for i = 41:47; figure(i); clf; end
-POS_mice = [1,2,4,6,8]; NEG_mice = [3,5,7];
-% for A = 1:8
-A = 4;
+fname = 'an171923_2012_06_04_data_s_sv_4';
+fname = 'an194181_2013_01_31_data_s_sv_2';
+fname = 'an194672_2013_02_24_data_s_sv_1';
+fname = 'an197522_2013_03_08_data_s_sv_2';
+fname = 'an198503_2013_03_15_data_s_sv_5';
+fname = 'an229716_2013_12_06_data_s_sv_6';
+fname = 'an229717_2013_12_01_data_s_sv_3';
+fname = 'an229719_2013_12_01_data_s_sv_6';
+for i = 41:47; figure(i); clf; end
+% POS_mice = [1,2,4,6,8]; NEG_mice = [3,5,7]; % Ca
+POS_mice = [1,2,3,7]; NEG_mice = [4,5,]; % Ca
+
+for A = 1:8
+% A = 4;
     fname = FNAMES{A};
     
     % Clustering results if available
     % load(['/Users/mathew/work/PopWorld/Clustering_Results_preround/Clustered_',fname,'.mat']); % _data_s_sv_1
     
-    load(['/Volumes/05/Peron_2015/Peron_ssc_events/an197522/',fname(1:19),'.mat'])
-%     load(['/Volumes/05/Peron_2015/Peron_ssc-2/ssc-2/',fname(1:8),'/',fname(1:19),'_data_struct.mat'])
-%     dat = s; clear s; 
+    %     load(['/Volumes/05/Peron_2015/Peron_ssc_events/an197522/',fname(1:19),'.mat'])
+    %     load(['/Volumes/05/Peron_2015/Peron_ssc-2/ssc-2/',fname(1:8),'/',fname(1:19),'_data_struct.mat'])
+    if A~=4
+        load(['/media/mathew/Data_1/Peron_ssc-2/with_events/',fname(1:8),'/',fname(1:19),'_sess.mat']);
+        dat = s; clear s;
+    else
+        load(['/media/mathew/Data_1/Peron_ssc-2/with_events/',fname(1:8),'/',fname(1:19),'.mat']);
+    end
+    %     dat = s; clear s;
     sv = str2num(fname(end));
     
     N = numel(dat.timeSeriesArrayHash.value);
@@ -714,26 +722,26 @@ A = 4;
     
     
     %% Create tuning curves of for Ang and K
-    for p = 1%:5
+    for p = 1:5
         NEG = -V(negx{p},p)' * data(Data.ixRetain(negx{p}),:);
         POS = V(posx{p},p)' * data(Data.ixRetain(posx{p}),:);
-%         figure(7+p);clf
+        figure(7+p);clf
         % Run either NEG or POS depending on mouse
         % POS_mice = [1,2,4,6,8]; NEG_mice = [3,5,7];
-%         for j = 1:2
-%             if j == 1
-%                 ca = POS;
+        for j = 1:2
+            if j == 1
+                ca = POS;
 %                 figure(42);
-%             elseif j == 2
-%                 ca = NEG;
+            elseif j == 2
+                ca = NEG;
 %                 figure(43);
+            end
+%             if any(ismember(POS_mice,A))
+%                 ca = POS;
+%             elseif any(ismember(NEG_mice,A))
+%                 ca = NEG;
 %             end
-        if any(ismember(POS_mice,A))
-            ca = POS;
-        elseif any(ismember(NEG_mice,A))
-            ca = NEG;
-        end
-            figure(46);
+                        figure(46);
             
             numbins = 15;
             bin_edges = round(linspace(1,numel(K_ds),numbins+1));
@@ -746,11 +754,11 @@ A = 4;
                 mean_kappa(i) = nanmean((K_ds(sort_K(bin_edges(i):bin_edges(i+1)))));
             end
             
-%             ax(2) = subplot(2,2,(j*2)-1);
-%             subplot(8,2,(A*2)-1); cla;
-            subplot(2,1,1); hold all;
-%             myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),[0,0,1,0])
-%             myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
+%                         ax(2) = subplot(2,2,(j*2)-1);
+            %             subplot(8,2,(A*2)-1); cla;
+%             subplot(2,1,1); hold all;
+%                         myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),[0,0,1,0])
+            %             myeb(mean_kappa,mean_ca_K,std_ca_K/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
             plot(mean_kappa,mean_ca_K- mean_ca_K(8),'linewidth',2,'color',cmap4(A,:))
             title([fname(1:8)])
             ylabel('Mean Normalized Ca (bin)');
@@ -768,22 +776,22 @@ A = 4;
             pop_mean_ca_A(A,:) = mean_ca_A;
             pop_mean_amp(A,:) = mean_amp;
             N_amp(A) = numel(K_ds);
-%             ax(1) = subplot(2,2,j*2);
-%             subplot(8,2,(A*2)); cla
-            subplot(2,1,2); hold all
-%             myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),[1,0.1,0,0])
-%             myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
+%                         ax(1) = subplot(2,2,j*2);
+            %             subplot(8,2,(A*2)); cla
+%             subplot(2,1,2); hold all
+%                         myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),[1,0.1,0,0])
+            %             myeb(mean_amp,mean_ca_A,std_ca_A/sqrt(bin_edges(2)-1),cmap4(A,:),cmap4(A,:))
             plot(mean_amp,mean_ca_A-mean_ca_A(1),'linewidth',2,'color',cmap4(A,:))
             ylabel('Mean Normalized Ca (bin)');
             xlabel('Whisker amplitude');
+        end
+        suptitle(['V',num2str(p),'. ',fname(1:8)])
+%         print(['Figures/V1_LowDprojection/Kappa_tuning_V',num2str(p),'_',fname,'_Events'],'-dpdf','-bestfit')
     end
-%         suptitle(['V',num2str(p),'. ',fname(1:8)])
-%         print(['Figures/V1_LowDprojection/Kappa_tuning_V',num2str(p),'_',fname],'-dpdf','-bestfit')
-%     end
     
     %% Touch triggered average
     % First find touches on relevant trials
-    x = dat.timeSeriesArrayHash.value{1,sv+1}.trial;
+    x = dat.timeSeriesArrayHash.value{1,ev_files(sv)}.trial;
     trials = unique(x);
     
     % Find the first touch on every trial
@@ -805,13 +813,13 @@ A = 4;
     % Closest frame to touch time
     ftf = [];
     for i = 1:numel(first_touch)
-        [mn,im] = min(abs(dat.timeSeriesArrayHash.value{sv+1}.time - first_touch(i)));
+        [mn,im] = min(abs(dat.timeSeriesArrayHash.value{ev_files(sv)}.time - first_touch(i)));
         ftf(i) = im; % dat.timeSeriesArrayHash.value{2}.time(im);
     end
     
 %     figure(31); clf;
     figure(47);
-    for p = 1%:5
+    for p = 1:5
         NEG = -V(negx{p},p)' * data(Data.ixRetain(negx{p}),:);
         POS = V(posx{p},p)' * data(Data.ixRetain(posx{p}),:);
         
@@ -843,20 +851,20 @@ A = 4;
             N_tth(A) = numel(ftf);
         end
         hold all
-%         plot([8,8],[-2,2],'k--')
+%         plot([8,8],[-1,1],'k--')
         
-%         title(['Touch triggered average. V',num2str(p)])
+        title(['Touch triggered average. V',num2str(p)])
 %         title([fname(1:8)])
         %     pause
     end
-%     print(['Figures/V1_LowDprojection/Touch_tuning_',fname],'-dpdf','-bestfit')
+%     print(['Figures/V1_LowDprojection/Touch_tuning_',fname,'_Events'],'-dpdf','-bestfit')
 end
 %%
 figure(48); clf;
 leg_str = []; for i = 1:8; plot([1,1],[1,2],'linewidth',2,'color',cmap4(i,:)); hold all; leg_str = [leg_str;'Mouse ',num2str(i)];end
 legend(leg_str)
 
-%% Amplitude and touch coding plots 
+%% All mice Amplitude and touch coding plots 
 figure(48); clf;
 subplot(1,2,1);
 plot(pop_mean_amp',pop_mean_ca_A','linewidth',2,'color',[.7,.7,.7]); hold all
