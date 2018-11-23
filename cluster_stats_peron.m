@@ -6,7 +6,7 @@
 %% gather all results into a Table...
 clear all; close all;
 
-fnames = dir('Clustering_Results_preround/');
+fnames = dir('Clustering_Results_preround/Clustered*');
 
 nF = numel(fnames);
 
@@ -16,7 +16,7 @@ for iF = 1:nF
     if any(strfind(fnames(iF).name,'Clustered'))
         netCtr = netCtr + 1;
         result(netCtr).NetworkName = fnames(iF).name(11:end-4); % strip out 'Clustered' and .mat
-        load(['Clustering_Results/' fnames(iF).name]);
+        load(['Clustering_Results_preround/' fnames(iF).name]);
         % keyboard
         result(netCtr).Signal_Consensus_Grps = numel(unique(Connected.ConsCluster)); 
         result(netCtr).Signal_Qmax_Grps = numel(unique(Connected.QmaxCluster)); 
