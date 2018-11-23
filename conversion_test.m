@@ -931,6 +931,6 @@ for i = 1:height(Scaling_Results_Table)
 end
 
 
-
-
-%% Cluster again but with 'explore' option on.
+%% DIAGNOSING CONSENSUS CLUSTERING FAILURE
+fname = 'an197522_2013_02_21_data_s_sv_1';
+%% Cluster again but with 'explore' option on

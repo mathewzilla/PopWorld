@@ -3,7 +3,7 @@
 
 clear all
 % load('/Users/mathew/work/PopWorld/Results_batch1/Network_Rejection_Table_wStats.mat')
-load('Results_reject_preround/Network_Rejection_Table_wStats_preround2.mat')
+load('Results_reject_preround/Network_Rejection_Table_wStats_preround3.mat') % Includes learning sessions
 %% Identify learning subvolumes to colour separately
 % NB: THERE IS SOMETHING WRONG WITH EVENTS FOR an197522 (animal 4)
 a = 2:5;
@@ -22,6 +22,17 @@ for i = 1:4
     L_sess = [L_sess; Network_Rejection_Table(L_sess_index,:)];
     % Add learning session variable to Network_Rejection_Table
     Network_Rejection_Table.Learning(L_sess_index) = 1;
+end
+
+%% Load events version and integrate with Network Rejection Table
+temp = load('/Users/mathew/work/PopWorld/Results_reject_events/Network_Rejection_Table_events.mat');
+events_table = temp.Network_Rejection_Table; clear temp
+for i =1:height(events_table)
+    Network_Rejection_Table.Event_Network_Size = events_table.Network_Size;
+    Network_Rejection_Table.Event_Signal_Size_WCM = events_table.Signal_Size_WCM;
+    Network_Rejection_Table.Event_WCM_Dn = events_table.WCM_Dn;
+    Network_Rejection_Table.Event_WCM_RejectionDn = events_table.WCM_RejectionDn;
+    Network_Rejection_Table.Event_Signal_Components = events_table.Signal_Components;
 end
 
 %% Adding two variables (3 columns each) with plotting colours (for dots and edges):
@@ -78,11 +89,11 @@ for n = 1:height(Network_Rejection_Table)
     %     end
 end
 
-
 %% First, actual network size vs signal network size
 % (var1,var2,labels,colours)
 var1 = Network_Rejection_Table.N;
-var2 = Network_Rejection_Table.Network_Size;
+% var2 = Network_Rejection_Table.Network_Size;
+var2 = Network_Rejection_Table.Event_Network_Size;
 labels = {'N';'Signal network size'};
 
 % plot_rejection_pairs(va1,va2,labels);
@@ -105,17 +116,18 @@ var2 = Network_Rejection_Table.WCM_RejectionDn;
 var3 = Network_Rejection_Table.Network_Size;
 
 var4 = Network_Rejection_Table.eig90;
+var4 = Network_Rejection_Table.Event_WCM_RejectionDn;
 % labels = {'N';'WCM_{RejectionDn}'};
 
 % plot_rejection_pairs(va1,va2,labels);
 figure(2); clf;
-% subplot(1,2,1)
+subplot(1,2,1)
 % h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour)
 
 % subplot(1,2,2)
 % labels = {'Retained N';'Rejection Dn'};
-labels = {'Retained N';'Eig 90'};
-
+% labels = {'Retained N';'Eig 90'};
+labels = {'Retained N';'Events Rejection Dn'};
 h(2) = plot_rejection_pairs(var3,var4,labels,colour_ID,edgecolour,dotcolour)
 % legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','northeast')
 % legend('Mouse 1','Mouse 2','Mouse 3','Mouse 4','Mouse 5','Mouse 6','Mouse 7','Mouse 8','location','southeast')
@@ -137,15 +149,21 @@ var4 = var4./max(var4(keepers));
 % var4 = local_z(var4,keepers);
 
 
+figure(2);clf;
+subplot(1,2,1)
+hold all
+labels = {'Calcium Spectral D (%)';'Eig_{90} dimensions (%)'};
+h(2) = plot_rejection_pairs(var2(keepers)*100,var4(keepers)*100,labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
+plot([0,100],[0,100],'linewidth',2,'color',[.7,.7,.7]); grid on
 
 
-% figure(1); clf;
+var2 = Network_Rejection_Table.Event_WCM_RejectionDn;
+var2 = var2./max(var2(keepers));
 subplot(1,2,2)
 hold all
-labels = {'Spectral rejection dims (%)';'Eig_{90} dimensions (%)'};
+labels = {'Events Spectral D (%)';'Eig_{90} dimensions (%)'};
 h(2) = plot_rejection_pairs(var2(keepers)*100,var4(keepers)*100,labels,colour_ID(keepers),edgecolour(keepers,:),dotcolour(keepers,:))
-plot([0,100],[0,100],'linewidth',2,'color',[.7,.7,.7]); 
-grid on
+plot([0,100],[0,100],'linewidth',2,'color',[.7,.7,.7]); grid on
 %% title('Proportion')
 
 figure(101); clf;
@@ -247,8 +265,10 @@ short_sess = find(Network_Rejection_Table.T<=5000);
 
 keepers = NL_sess(ismember(NL_sess,short_sess));
 
-var1 = Network_Rejection_Table.Signal_Size_WCM;
-var2 = Network_Rejection_Table.WCM_RejectionDn;
+% var1 = Network_Rejection_Table.Signal_Size_WCM;
+var1 = Network_Rejection_Table.Event_Signal_Size_WCM;
+% var2 = Network_Rejection_Table.WCM_RejectionDn;
+var2 = Network_Rejection_Table.Event_WCM_RejectionDn;
 var3 = Network_Rejection_Table.Network_Size;
 var4 = Network_Rejection_Table.eig90;
 
@@ -274,9 +294,11 @@ linkaxes(ax)
 
 %% Fitting linear and rise to max models (Mark's code). 
 clear AICs BICs
-var1 = Network_Rejection_Table.Signal_Size_WCM;
-var2 = Network_Rejection_Table.WCM_RejectionDn;
+% var1 = Network_Rejection_Table.Signal_Size_WCM;
+% var2 = Network_Rejection_Table.WCM_RejectionDn;
 % var2 = Network_Rejection_Table.eig90;
+var1 = Network_Rejection_Table.Event_Signal_Size_WCM;
+var2 = Network_Rejection_Table.Event_WCM_RejectionDn;
 xdata = var1(keepers);
 ydata = var2(keepers);
 
@@ -310,8 +332,9 @@ yEst1 = xdata*B;
 % plot(xdata,yEst1,'g','linewidth',2)
 
 %% Plotting
-figure(104); clf;
-subplot(1,2,1);
+% figure(104); clf;
+% subplot(1,2,1);
+figure(2);
 % labels = {'Retained N';'D_{Rejection}'};
 labels = {'N';'Spectral rejection dimensions'};
 % labels = {'N';'Eig_{90} dimensions'};
@@ -342,8 +365,10 @@ plot([xrange(31);xrange(31)],[0,r2maxpred(31)],'b:','linewidth',2)
 
 xlim([0,2050])
 %% Refit to individual mice
-var1 = Network_Rejection_Table.Signal_Size_WCM;
-var2 = Network_Rejection_Table.WCM_RejectionDn;
+% var1 = Network_Rejection_Table.Signal_Size_WCM;
+% var2 = Network_Rejection_Table.WCM_RejectionDn;
+var1 = Network_Rejection_Table.Event_Signal_Size_WCM;
+var2 = Network_Rejection_Table.Event_WCM_RejectionDn;
 xdata = var1(keepers);
 ydata = var2(keepers);
 
@@ -763,6 +788,24 @@ h(3) = plot_rejection_pairs(var1(nl),var2(nl),labels,colour_ID(nl),edgecolour(nl
 
 % legend('Peron','Calcium','Mouse 2','Mouse 3','Mouse 4','Mouse 5','location','best')
 xlim([0,8e6])
+
+%% Compare events D to calcium D
+% var1 = Network_Rejection_Table.Network_Size;
+% var2 = Network_Rejection_Table.Event_Network_Size;
+var1 = Network_Rejection_Table.WCM_RejectionDn;
+var2 = Network_Rejection_Table.Event_WCM_RejectionDn;
+
+% labels = {'Calcium Network Size'; 'Event Network Size'};
+labels = {'Calcium D'; 'Events D'};
+
+% plot_rejection_pairs(va1,va2,labels);
+figure(201); clf;
+% subplot(1,2,1)
+h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour);
+% plot([0,2500],[0,2500],'k--')
+
+
+%% OLDER (PRE COSYNE ABSTRACT) STUFF
 
 %% NOT INTERESTING:
 % % Repeat N*T but Separate figure for each mouse. Plot slope for each on top
