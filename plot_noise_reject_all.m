@@ -1400,7 +1400,7 @@ print(gcf,'-depsc','-painters','noiserejection/figs/Lsess_NRvstime2.eps')
 %% Correlates with performance
 figure(6);
 clf
-for i = 2:5;
+for i = 2:5
     a = find(L_sess(:,1) == i);
     % N
     subplot(2,2,1); hold all;

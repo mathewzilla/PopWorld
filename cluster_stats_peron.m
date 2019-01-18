@@ -46,22 +46,23 @@ Network_Clustering_Table = struct2table(result);
 save('Clustering_Results_preround/Network_Clustering_Table','Network_Clustering_Table');
 
 %% Load Network_Clustering_Table and Rejection table
-load('Results_reject_preround/Network_Rejection_Table_wStats_preround3.mat')
+% load('Results_reject_preround/Network_Rejection_Table_wStats_preround3.mat')
+load('Results_reject_preround/Network_Rejection_Table_wEvents.mat')
 load('Clustering_Results_preround/Network_Clustering_Table.mat')
 
 %% Combine Clustering and Rejection results into a single table
 clear result
 n = 0;
 for i = 1:height(Network_Clustering_Table)
-    if Network_Clustering_Table.Signal_Qmax_Grps{i}>0
+    if Network_Clustering_Table.Signal_Qmax_Grps(i)>0
         n = n+1;
         result(n).NetworkName = Network_Clustering_Table.NetworkName{i};
-        result(n).Signal_Consensus_Grps = Network_Clustering_Table.Signal_Consensus_Grps{i};
-        result(n).Signal_Qmax_Grps = Network_Clustering_Table.Signal_Qmax_Grps{i};
-        result(n).Signal_Louvain_MeanGrps = Network_Clustering_Table.Signal_Louvain_MeanGrps{i};
-        result(n).Full_Consensus_Grps = Network_Clustering_Table.Full_Consensus_Grps{i};
-        result(n).Full_Qmax_Grps = Network_Clustering_Table.Full_Qmax_Grps{i};
-        result(n).Full_Louvain_MeanGrps = Network_Clustering_Table.Full_Louvain_MeanGrps{i};
+        result(n).Signal_Consensus_Grps = Network_Clustering_Table.Signal_Consensus_Grps(i);
+        result(n).Signal_Qmax_Grps = Network_Clustering_Table.Signal_Qmax_Grps(i);
+        result(n).Signal_Louvain_MeanGrps = Network_Clustering_Table.Signal_Louvain_MeanGrps(i);
+        result(n).Full_Consensus_Grps = Network_Clustering_Table.Full_Consensus_Grps(i);
+        result(n).Full_Qmax_Grps = Network_Clustering_Table.Full_Qmax_Grps(i);
+        result(n).Full_Louvain_MeanGrps = Network_Clustering_Table.Full_Louvain_MeanGrps(i);
         
         for j = 1:height(Network_Rejection_Table)
             if strcmp(Network_Rejection_Table.NetworkName{j},Network_Clustering_Table.NetworkName{i})
