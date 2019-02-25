@@ -25,7 +25,8 @@ for i = 1:4
 end
 
 %% Load events version and integrate with Network Rejection Table
-temp = load('/Users/mathew/work/PopWorld/Results_reject_events/Network_Rejection_Table_events.mat');
+% temp = load('/Users/mathew/work/PopWorld/Results_reject_events/Network_Rejection_Table_events.mat');
+temp = load('Results_reject_events/Network_Rejection_Table_events.mat');
 events_table = temp.Network_Rejection_Table; clear temp
 for i =1:height(events_table)
     Network_Rejection_Table.Event_Network_Size = events_table.Network_Size;
@@ -803,6 +804,25 @@ figure(201); clf;
 % subplot(1,2,1)
 h(1) = plot_rejection_pairs(var1,var2,labels,colour_ID,edgecolour,dotcolour);
 % plot([0,2500],[0,2500],'k--')
+
+%% Feb 2019. Dimensionality of same neurons (SVIDs) over time
+
+% Assigning new SVID to the non-learning subset via within mouse network
+% size (happens to be unique in this dataset)
+svid = 0;
+clear this_A u_sv
+for A = 1:8
+    this_A = find(Network_Rejection_Table.Animal == A);
+    u_sv = unique(Network_Rejection_Table.N(this_A),'stable');
+    for i = 1:numel(u_sv)
+        svid = svid + 1;
+        these_svs = this_A(find(Network_Rejection_Table.N(this_A) == u_sv(i)));
+        Network_Rejection_Table.SVID(these_svs) = svid;
+    end
+    
+end
+
+%% For each SVID, plot N by WCM_RejectionDn connected by a line
 
 
 %% OLDER (PRE COSYNE ABSTRACT) STUFF

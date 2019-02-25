@@ -902,6 +902,14 @@ ylabel('Population Ca2+')
 xlabel('Time (ms)')
 xlim([0,7000])
 % plot(mean([pop_ca_ts'-pop_med_events(:,2)']')+mean(pop_med_events(:,2)),mean(pop_psth_ca),'linewidth',2,'color',[.7,0,.7])
+
+
+
+
+
+
+
+
 %% OLDER CLUSTER PLOT CODE %%%%%%%%%%%%%%%%%%%%%%
 %% High skewness neurons
 ca = dat.timeSeriesArrayHash.value{2}.valueMatrix;
