@@ -835,13 +835,7 @@ rep_sv = find(n_svid>=4);
 
 var1 = Network_Rejection_Table.Network_Size;
 var2 = Network_Rejection_Table.WCM_RejectionDn;
-labels = {'N','D'};
-figure(301); clf; hold all
-% subplot(1,2,1)
-for i = 1:numel(rep_sv)
-    x = find(Network_Rejection_Table.SVID ==rep_sv(i));
-    h(1) = plot_rejection_pairs(var1(x),var2(x),labels,colour_ID(x),edgecolour(x,:),dotcolour(x,:));
-end
+
 
 %% OLDER (PRE COSYNE ABSTRACT) STUFF
 
