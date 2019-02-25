@@ -827,21 +827,21 @@ n_svid = hist(Network_Rejection_Table.SVID,svid);
 
 rep_sv = find(n_svid>=4);
 
-% %  checking this method is working
-% for i = 1:numel(rep_sv)
-%     x = find(Network_Rejection_Table.SVID ==rep_sv(i));
-%     sv_counter(i) = numel(x);
-% end
+% unroll id of retained svids
+kept_sv = [];
+sv_unroll = [];
+for i = 1:numel(rep_sv)
+    x = find(Network_Rejection_Table.SVID ==rep_sv(i));
+    kept_sv = [kept_sv;rep_sv(i)*ones(numel(x),1)];
+    sv_unroll = [sv_unroll;x];
+end
 
 var1 = Network_Rejection_Table.Network_Size;
 var2 = Network_Rejection_Table.WCM_RejectionDn;
 labels = {'N','D'};
 figure(301); clf; hold all
-% subplot(1,2,1)
-for i = 1:numel(rep_sv)
-    x = find(Network_Rejection_Table.SVID ==rep_sv(i));
-    h(1) = plot_rejection_pairs(var1(x),var2(x),labels,colour_ID(x),edgecolour(x,:),dotcolour(x,:));
-end
+h(1) = plot_rejection_pairs_lines(var1(sv_unroll),var2(sv_unroll),labels,kept_sv,edgecolour(sv_unroll,:),dotcolour(sv_unroll,:));
+
 
 %% OLDER (PRE COSYNE ABSTRACT) STUFF
 
@@ -1616,7 +1616,8 @@ C = unique(colour_ID);
 for c = 1:numel(C)
     these_d = find(colour_ID == C(c));
     
-    h = plot(var1(these_d),var2(these_d),'color',dotcolour(these_d(1),:),'linewidth',2);
+%     h = plot(var1(these_d),var2(these_d),'color',dotcolour(these_d(1),:),'linewidth',2);
+    h = plot(var1(these_d),var2(these_d),'color',edgecolour(these_d(1),:),'linewidth',2);
     h = plot(var1(these_d),var2(these_d),'o','markeredgecolor',edgecolour(these_d(1),:),'markerfacecolor',dotcolour(these_d(1),:),'markersize',5);
 end
 axis square
